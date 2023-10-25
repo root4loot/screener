@@ -23,5 +23,5 @@ require (
 
 require (
 	github.com/chromedp/chromedp v0.9.3
-	github.com/root4loot/goscope v0.0.0-20231020152155-62ac840bfe58
+	github.com/root4loot/goscope v0.0.0-20231025163547-678b34032207
 )

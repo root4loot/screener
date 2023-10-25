@@ -26,6 +26,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/root4loot/goscope v0.0.0-20231020152155-62ac840bfe58 h1:kDt4gPDr1hRrJMBFrJu3guD/jOg7dnPKjnpbYYOGecA=
 github.com/root4loot/goscope v0.0.0-20231020152155-62ac840bfe58/go.mod h1:uQpXRlVAUGFfOYGJlPn2lH/rzJTzBO5hsW5Pb8KZ2x0=
+github.com/root4loot/goscope v0.0.0-20231025163547-678b34032207 h1:hFDnZYa54cENYMQILUd6Vq7klFAt+PYi5AP86pvznxs=
+github.com/root4loot/goscope v0.0.0-20231025163547-678b34032207/go.mod h1:uQpXRlVAUGFfOYGJlPn2lH/rzJTzBO5hsW5Pb8KZ2x0=
 github.com/root4loot/goutils v0.0.0-20231020125334-e9ac4875ef8c h1:Fqe2gvX0kWkb5W6JY2RY+AybJiH9Kow2Ps884MiLnHA=
 github.com/root4loot/goutils v0.0.0-20231020125334-e9ac4875ef8c/go.mod h1:/8q9ygQEj1HroI01Psv0+DmJN9QIqbhJI5CmKpXqoo0=
 github.com/root4loot/relog v0.0.0-20231021000944-471e75e204aa h1:MVw9WV3B+APiQtVvPm5UyBtS+iB8qLx9w+iBmMWqSo8=
