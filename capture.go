@@ -84,9 +84,9 @@ func (r *Runner) worker(url string) Result {
 		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
 		if err != nil {
 			Log.Warnf("Could not save screenshot for %s: %v", url, err)
+		} else {
+			Log.Infoln("Screenshot", url, "saved to", r.Options.SaveScreenshotsPath)
 		}
-
-		Log.Infoln("Screenshot", url, "saved to", r.Options.SaveScreenshotsPath)
 	}
 
 	return result
