@@ -80,8 +80,11 @@ func NewRunnerWithOptions(options Options) *Runner {
 
 	Log.Debugln("Creating new runner with options...")
 
-	newScope := goscope.NewScope()
-	options.Scope = newScope
+	// If no scope is specified, create a new one
+	if options.Scope == nil {
+		newScope := goscope.NewScope()
+		options.Scope = newScope
+	}
 
 	return &Runner{
 		Options: &options,
