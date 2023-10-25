@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -110,10 +111,15 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 		return "", err
 	}
 
-	// Create a filename that includes the scheme, host, and port.
-	fileName := filepath.Join(folderPath, u.Scheme+"_"+u.Host+u.Port()+u.Path+".png")
+	var path string
+	if u.Path != "" {
+		path = "_" + u.Path
+	}
 
-	file, err := os.Create(fileName)
+	// Create a filename that includes the scheme, host, and port.
+	fileName := filepath.Join(folderPath, u.Scheme+"_"+u.Host+path+".png")
+
+	file, err := os.Create(strings.ToLower(fileName))
 	if err != nil {
 		return "", err
 	}
