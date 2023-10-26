@@ -7,7 +7,7 @@ screener is a command-line interface (CLI) and Golang library for capturing scre
 ## Features
 
 - **Stream URLs for Screenshotting**: Accepts URLs via standard input (STDIN) and processes them in real-time.
-- **Wait for Full Page to Load**: Allows waiting for the complete rendering of the web page body for more accurate screenshots. This avoids capturing loading icons.
+- **Wait for Page to Load**: Allows waiting for the complete rendering of the web page body for more accurate screenshots. This avoids capturing loading icons.
 - **Redirect Handling**: Customizable option for following or ignoring redirects.
 - **Unique Screenshots**: Provides the option to save only unique screenshots.
 - **Concurrency Support**: Enables fast processing through concurrent requests.
@@ -63,7 +63,7 @@ OUTPUT:
 In this example, Screener reads URLs from urls.txt and waits for the web pages to fully load before capturing screenshots.
 
 ```sh
-✗ screener -i urls.txt --wait-for-network-idle
+✗ screener -i urls.txt --wait-page
 [screener] (INFO) Screenshot http://example.com saved to ./screenshots
 [screener] (INFO) Screenshot https://example.com saved to ./screenshots
 [screener] (INFO) Screenshot http://hackerone.com saved to ./screenshots
