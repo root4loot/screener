@@ -25,7 +25,7 @@ func main() {
 		Timeout:                 10,
 		SaveScreenshots:         true,
 		SaveScreenshotsPath:     "custom",
-		WaitForNetworkIdle:      true,
+		WaitForPageLoad:         true,
 		FollowRedirects:         true,
 		DisableHTTP2:            true,
 		IgnoreCertificateErrors: true,

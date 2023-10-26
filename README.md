@@ -32,28 +32,27 @@ docker run -it screener -h
 ```
 Usage: screener [options] (-u <url> | -i <urls.txt>)
 
-
 INPUT:
-   -u,   --url                     single URL
-   -i,   --infile                  file containing URLs (one per line))
+   -u,   --url                single URL
+   -i,   --infile             file containing URLs (one per line))
 
 CONFIGURATIONS:
-   -c,   --concurrency             number of concurrent requests                                (Default: 10)
-   -t,   --timeout                 timeout for screenshot capture                               (Default: 15 seconds)
-   -ua,  --user-agent              set user agent                                               (Default: Chrome Headless)
-   -su,  --save-unique             save unique screenshots only                                 (Default: false)
-   -wn,  --wait-for-network-idle   Wait for all network activity to complete before capturing   (Default: true)
-   -ice, --ignore-cert-err         ignore certificate errors                                    (Default: true)
-   -dh,  --disable-http2           disable HTTP2                                                (Default: true)
-   -fr,  --follow-redirects        follow redirects                                             (Default: true)
-   -cw,  --capture-width           screenshot pixel width                                       (Default: 1920)
-   -ch,  --capture-height          screenshot pixel height                                      (Default: 1080)
+   -c,   --concurrency        number of concurrent requests                  (Default: 10)
+   -t,   --timeout            timeout for screenshot capture                 (Default: 15 seconds)
+   -ua,  --user-agent         set user agent                                 (Default: Chrome Headless)
+   -su,  --save-unique        save unique screenshots only                   (Default: false)
+   -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
+   -ice, --ignore-cert-err    ignore certificate errors                      (Default: true)
+   -dh,  --disable-http2      disable HTTP2                                  (Default: true)
+   -fr,  --follow-redirects   follow redirects                               (Default: true)
+   -cw,  --capture-width      screenshot pixel width                         (Default: 1920)
+   -ch,  --capture-height     screenshot pixel height                        (Default: 1080)
 
 OUTPUT:
-   -o,  --outfolder                save images to given folder     (Default: ./screenshots)
-   -s,  --silence                  silence output
-   -v,  --verbose                  verbose output
-        --version                  display version
+   -o,  --outfolder           save images to given folder     (Default: ./screenshots)
+   -s,  --silence             silence output
+   -v,  --verbose             verbose output
+        --version             display version
 ```
 
 

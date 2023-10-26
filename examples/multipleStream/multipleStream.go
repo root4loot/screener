@@ -25,7 +25,7 @@ func main() {
 		Concurrency:             10,
 		Timeout:                 15,
 		SaveScreenshots:         true,
-		WaitForNetworkIdle:      true,
+		WaitForPageLoad:         true,
 		FollowRedirects:         true,
 		DisableHTTP2:            true,
 		IgnoreCertificateErrors: true,

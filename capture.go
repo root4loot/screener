@@ -52,9 +52,9 @@ func (r *Runner) worker(url string) Result {
 		tasks = append(tasks, chromedp.Navigate(url))
 	}
 
-	// WaitForNetworkIdle, when enabled, ensures that the screenshot is taken
+	// WaitForPageLoad, when enabled, ensures that the screenshot is taken
 	// only after all network activity has completed, providing a fully loaded page.
-	if r.Options.WaitForNetworkIdle {
+	if r.Options.WaitForPageLoad {
 		// Listen for network events to track the status of network requests.
 		chromedp.ListenTarget(cctx, func(ev interface{}) {
 			if _, ok := ev.(*network.EventLoadingFinished); ok {

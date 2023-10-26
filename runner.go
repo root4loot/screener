@@ -28,7 +28,7 @@ type Options struct {
 	SaveUnique              bool           // Save unique screenshots only
 	Scope                   *goscope.Scope // Scope to use
 	UserAgent               string         // User agent to use
-	WaitForNetworkIdle      bool           // Wait for all network activity to complete before capturing
+	WaitForPageLoad         bool           // Wait for page to load before capturing
 	// Resolvers               []string       // List of resolvers to use
 	FollowRedirects bool // Follow redirects
 	Silence         bool // Silence output
@@ -56,7 +56,7 @@ func DefaultOptions() *Options {
 		DisableHTTP2:            true,
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
-		WaitForNetworkIdle:      true,
+		WaitForPageLoad:         true,
 		FollowRedirects:         true,
 	}
 }
