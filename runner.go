@@ -49,8 +49,8 @@ func DefaultOptions() *Options {
 	return &Options{
 		Concurrency:             10,
 		Timeout:                 15,
-		CaptureWidth:            1024,
-		CaptureHeight:           768,
+		CaptureWidth:            1080,
+		CaptureHeight:           1920,
 		IgnoreCertificateErrors: true,
 		SaveUnique:              false,
 		DisableHTTP2:            true,
