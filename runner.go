@@ -58,6 +58,7 @@ func DefaultOptions() *Options {
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
 		WaitForPageLoad:         true,
+		WaitTime:                1,
 		FollowRedirects:         true,
 	}
 }
