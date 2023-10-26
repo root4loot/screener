@@ -46,8 +46,8 @@ CONFIGURATIONS:
    -ice, --ignore-cert-err         ignore certificate errors                                    (Default: true)
    -dh,  --disable-http2           disable HTTP2                                                (Default: true)
    -fr,  --follow-redirects        follow redirects                                             (Default: true)
-   -cw,  --capture-width           screenshot pixel width                                       (Default: 1080)
-   -ch,  --capture-height          screenshot pixel height                                      (Default: 1920)
+   -cw,  --capture-width           screenshot pixel width                                       (Default: 1920)
+   -ch,  --capture-height          screenshot pixel height                                      (Default: 1080)
 
 OUTPUT:
    -o,  --outfolder                save images to given folder     (Default: ./screenshots)
