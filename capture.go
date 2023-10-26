@@ -64,6 +64,11 @@ func (r *Runner) worker(url string) Result {
 		})
 	}
 
+	// Wait for the specified time before capturing the screenshot
+	if r.Options.WaitTime > 0 {
+		time.Sleep(time.Duration(r.Options.WaitTime) * time.Second)
+	}
+
 	tasks = append(tasks, chromedp.CaptureScreenshot(&result.Image))
 
 	// Run the tasks in the context.

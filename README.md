@@ -34,19 +34,20 @@ Usage: screener [options] (-u <url> | -i <urls.txt>)
 
 INPUT:
    -u,   --url                single URL
-   -i,   --infile             file containing URLs (one per line))
+   -i,   --infile             file containing URLs (one per line)
 
 CONFIGURATIONS:
    -c,   --concurrency        number of concurrent requests                  (Default: 10)
    -t,   --timeout            timeout for screenshot capture                 (Default: 15 seconds)
    -ua,  --user-agent         set user agent                                 (Default: Chrome Headless)
    -su,  --save-unique        save unique screenshots only                   (Default: false)
-   -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
-   -ice, --ignore-cert-err    ignore certificate errors                      (Default: true)
    -dh,  --disable-http2      disable HTTP2                                  (Default: true)
    -fr,  --follow-redirects   follow redirects                               (Default: true)
    -cw,  --capture-width      screenshot pixel width                         (Default: 1920)
    -ch,  --capture-height     screenshot pixel height                        (Default: 1080)
+   -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
+   -wt,  --wait-time          wait time before capturing (seconds)           (Default: 0)
+   -ice, --ignore-cert-err    ignore certificate errors                      (Default: true)
 
 OUTPUT:
    -o,  --outfolder           save images to given folder     (Default: ./screenshots)

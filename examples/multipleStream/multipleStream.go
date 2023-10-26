@@ -26,6 +26,7 @@ func main() {
 		Timeout:                 15,
 		SaveScreenshots:         true,
 		WaitForPageLoad:         true,
+		WaitTime:                1,
 		FollowRedirects:         true,
 		DisableHTTP2:            true,
 		IgnoreCertificateErrors: true,

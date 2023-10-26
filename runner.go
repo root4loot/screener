@@ -29,6 +29,7 @@ type Options struct {
 	Scope                   *goscope.Scope // Scope to use
 	UserAgent               string         // User agent to use
 	WaitForPageLoad         bool           // Wait for page to load before capturing
+	WaitTime                int            // Wait time before capturing (seconds)
 	// Resolvers               []string       // List of resolvers to use
 	FollowRedirects bool // Follow redirects
 	Silence         bool // Silence output
