@@ -34,36 +34,36 @@ Usage: screener [options] (-u <url> | -i <urls.txt>)
 
 
 INPUT:
-   -u,   --url                single URL
-   -i,   --infile             file containing URLs (one per line))
+   -u,   --url                     single URL
+   -i,   --infile                  file containing URLs (one per line))
 
 CONFIGURATIONS:
-   -c,   --concurrency        number of concurrent requests    (Default: 10)
-   -t,   --timeout            timeout for screenshot capture   (Default: 15 seconds)
-   -ua,  --user-agent         set user agent                   (Default: Chrome Headless)
-   -su,  --save-unique        save unique screenshots only     (Default: false)
-   -wb,  --wait-for-body      wait for page body to load       (Default: true)
-   -ice, --ignore-cert-err    ignore certificate errors        (Default: true)
-   -dh,  --disable-http2      disable HTTP2                    (Default: true)
-   -fr,  --follow-redirects   follow redirects                 (Default: true)
-   -cw,  --capture-width      screenshot pixel width           (Default: 1024)
-   -ch,  --capture-height     screenshot pixel height          (Default: 768)
+   -c,   --concurrency             number of concurrent requests                                (Default: 10)
+   -t,   --timeout                 timeout for screenshot capture                               (Default: 15 seconds)
+   -ua,  --user-agent              set user agent                                               (Default: Chrome Headless)
+   -su,  --save-unique             save unique screenshots only                                 (Default: false)
+   -wn,  --wait-for-network-idle   Wait for all network activity to complete before capturing   (Default: true)
+   -ice, --ignore-cert-err         ignore certificate errors                                    (Default: true)
+   -dh,  --disable-http2           disable HTTP2                                                (Default: true)
+   -fr,  --follow-redirects        follow redirects                                             (Default: true)
+   -cw,  --capture-width           screenshot pixel width                                       (Default: 1080)
+   -ch,  --capture-height          screenshot pixel height                                      (Default: 1920)
 
 OUTPUT:
-   -o,  --outfolder           save images to given folder     (Default: ./screenshots)
-   -s,  --silence             silence output
-   -v,  --verbose             verbose output
-        --version             display version
+   -o,  --outfolder                save images to given folder     (Default: ./screenshots)
+   -s,  --silence                  silence output
+   -v,  --verbose                  verbose output
+        --version                  display version
 ```
 
 
 ## Example Usage
 
 ### Screenshotting URLs in file
-In this example, screener reads URLs from urls.txt and waits for the web pages to fully load before capturing screenshots.
+In this example, Screener reads URLs from urls.txt and waits for the web pages to fully load before capturing screenshots.
 
 ```sh
-✗ screener -i urls.txt --wait-for-body
+✗ screener -i urls.txt --wait-for-network-idle
 [screener] (INFO) Screenshot http://example.com saved to ./screenshots
 [screener] (INFO) Screenshot https://example.com saved to ./screenshots
 [screener] (INFO) Screenshot http://hackerone.com saved to ./screenshots

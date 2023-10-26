@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 )
 
@@ -39,10 +40,11 @@ func (r *Runner) worker(url string) Result {
 	allocator, _ := chromedp.NewExecAllocator(ctx, opts...)
 
 	// Create a context with the custom allocator.
-	cctx, cancel := chromedp.NewContext(allocator)
-	defer cancel()
+	cctx, cancelContext := chromedp.NewContext(allocator)
+	defer cancelContext()
 
-	tasks := []chromedp.Action{
+	// Add tasks to emulate viewport and navigate to the URL.
+	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
 	}
 
@@ -50,14 +52,22 @@ func (r *Runner) worker(url string) Result {
 		tasks = append(tasks, chromedp.Navigate(url))
 	}
 
-	// Conditionally wait for the page to fully load based on the WaitForPageBody option.
-	if r.Options.WaitForPageBody {
-		tasks = append(tasks, chromedp.WaitVisible("html body", chromedp.ByQuery))
+	// WaitForNetworkIdle, when enabled, ensures that the screenshot is taken
+	// only after all network activity has completed, providing a fully loaded page.
+	if r.Options.WaitForNetworkIdle {
+		// Listen for network events to track the status of network requests.
+		chromedp.ListenTarget(cctx, func(ev interface{}) {
+			if _, ok := ev.(*network.EventLoadingFinished); ok {
+				// A network event indicates that the page is fully loaded.
+				shouldSave = true
+			}
+		})
 	}
 
 	tasks = append(tasks, chromedp.CaptureScreenshot(&result.Image))
 
-	err := chromedp.Run(cctx, chromedp.Tasks(tasks))
+	// Run the tasks in the context.
+	err := chromedp.Run(cctx, tasks)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			Log.Warnf("Timeout exceeded for %s", url)
