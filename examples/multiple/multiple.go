@@ -31,6 +31,8 @@ func main() {
 		IgnoreCertificateErrors: true,
 		Verbose:                 false,
 		Silence:                 true,
+		CaptureWidth:            1920,
+		CaptureHeight:           1080,
 	}
 
 	// Create a screener runner with options
