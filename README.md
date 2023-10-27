@@ -46,7 +46,7 @@ CONFIGURATIONS:
    -cw,  --capture-width      screenshot pixel width                         (Default: 1920)
    -ch,  --capture-height     screenshot pixel height                        (Default: 1080)
    -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
-   -wt,  --wait-time          wait time before capturing (seconds)           (Default: 0)
+   -wt,  --wait-time          wait time before capturing (seconds)           (Default: 1)
    -ice, --ignore-cert-err    ignore certificate errors                      (Default: true)
 
 OUTPUT:
