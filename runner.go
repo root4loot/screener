@@ -98,7 +98,7 @@ func (r *Runner) Single(target string) (result Result) {
 	Log.Debugln("Running single...")
 	r.Options.SaveScreenshots = true
 	urls := r.initializeTargets(target)
-	if r.Options.Scope.InScope(urls[0]) {
+	if r.Options.Scope.IsTargetInScope(urls[0]) {
 		return r.worker(urls[0])
 	}
 	return
@@ -114,7 +114,7 @@ func (r *Runner) Multiple(targets []string) (results []Result) {
 	inScopeCount := 0 // Counter for in-scope URLs
 
 	for _, url := range urls {
-		if r.Options.Scope.InScope(url) {
+		if r.Options.Scope.IsTargetInScope(url) {
 			inScopeCount++ // Increment counter for in-scope URLs
 			go func(u string) {
 				result := r.worker(u)
@@ -142,7 +142,7 @@ func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
 	for _, url := range urls {
-		if r.Options.Scope.InScope(url) {
+		if r.Options.Scope.IsTargetInScope(url) {
 			sem <- struct{}{}
 			wg.Add(1)
 			go func(u string) {
