@@ -96,7 +96,6 @@ func NewRunnerWithOptions(options Options) *Runner {
 // Single captures a single target and returns the result
 func (r *Runner) Single(target string) (result Result) {
 	Log.Debugln("Running single...")
-	r.Options.SaveScreenshots = true
 	urls := r.initializeTargets(target)
 	if r.Options.Scope.IsTargetInScope(urls[0]) {
 		return r.worker(urls[0])
