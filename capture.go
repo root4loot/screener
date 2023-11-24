@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,14 +13,16 @@ import (
 
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
+	"github.com/root4loot/goutils/log"
 )
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
 func (r *Runner) worker(url string) Result {
-	Log.Debugln("Running worker on ", url)
+	log.Debug("Running worker on ", url)
 
-	shouldSave := true // Flag to decide if the screenshot should be saved
+	var redirected bool // Flag to track redirects
+	shouldSave := true  // Flag to decide if the screenshot should be saved
 
 	// Initialize the result.
 	result := Result{URL: url}
@@ -46,11 +49,25 @@ func (r *Runner) worker(url string) Result {
 	// Add tasks to emulate viewport and navigate to the URL.
 	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
+		chromedp.Navigate(url),
 	}
 
-	if r.Options.FollowRedirects {
-		tasks = append(tasks, chromedp.Navigate(url))
-	}
+	// Listen to network events
+	chromedp.ListenTarget(cctx, func(ev interface{}) {
+		switch ev := ev.(type) {
+		case *network.EventResponseReceived:
+			// Check if the response URL is different from the initial URL
+			if ev.Response.URL != url {
+				redirected = true
+				log.Infof("Redirect detected from %s to %s", url, ev.Response.URL)
+				if !r.Options.FollowRedirects {
+					// If FollowRedirects is false, cancel the context to stop loading
+					log.Infof("Cancelling context due to redirect")
+					cancelContext()
+				}
+			}
+		}
+	})
 
 	// WaitForPageLoad, when enabled, ensures that the screenshot is taken
 	// only after all network activity has completed, providing a fully loaded page.
@@ -69,13 +86,20 @@ func (r *Runner) worker(url string) Result {
 		time.Sleep(time.Duration(r.Options.WaitTime) * time.Second)
 	}
 
+	// Before taking a screenshot, check if there was a redirect and FollowRedirects is false
+
+	if redirected && !r.Options.FollowRedirects {
+		log.Debugf("Redirect occurred and FollowRedirects is false. Skipping screenshot for %s", url)
+		return Result{URL: url, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
+	}
+
 	tasks = append(tasks, chromedp.CaptureScreenshot(&result.Image))
 
 	// Run the tasks in the context.
 	err := chromedp.Run(cctx, tasks)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			Log.Warnf("Timeout exceeded for %s", url)
+			log.Warnf("Timeout exceeded for %s", url)
 		} else {
 			result.Error = err
 		}
@@ -86,9 +110,9 @@ func (r *Runner) worker(url string) Result {
 	if r.Options.SaveUnique {
 		unique, err := checkHashUnique(result.Image)
 		if err != nil {
-			Log.Warnf("Could not perform uniqueness check: %v", err)
+			log.Warnf("Could not perform uniqueness check: %v", err)
 		} else if !unique {
-			Log.Infof("Duplicate screenshot found for %s. Skipping save.", url)
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", url)
 			shouldSave = false
 		}
 	}
@@ -99,9 +123,9 @@ func (r *Runner) worker(url string) Result {
 		}
 		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
 		if err != nil {
-			Log.Warnf("Could not save screenshot for %s: %v", url, err)
+			log.Warnf("Could not save screenshot for %s: %v", url, err)
 		} else {
-			Log.Infoln("Screenshot", url, "saved to", r.Options.SaveScreenshotsPath)
+			log.Info("Screenshot", url, "saved to", r.Options.SaveScreenshotsPath)
 		}
 	}
 
@@ -126,14 +150,16 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 		return "", err
 	}
 
-	var path string
-	if u.Path != "" {
-		path = "_" + u.Path
+	// Process the path to remove a trailing slash and prepend with an underscore
+	path := strings.TrimSuffix(u.Path, "/")
+	if path != "" {
+		path = "_" + path
 	}
 
 	// Create a filename that includes the scheme, host, and port.
 	fileName := filepath.Join(folderPath, u.Scheme+"_"+u.Host+path+".png")
 
+	// Open the file for writing. Ensure the filename is in lower case.
 	file, err := os.Create(strings.ToLower(fileName))
 	if err != nil {
 		return "", err

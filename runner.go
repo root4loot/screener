@@ -6,10 +6,8 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goscope"
-	"github.com/root4loot/relog"
+	"github.com/root4loot/goutils/log"
 )
-
-var Log = relog.NewLogger("screener")
 
 type Runner struct {
 	Options *Options
@@ -43,9 +41,13 @@ type Result struct {
 	Error    error
 }
 
+func init() {
+	log.Init("screener")
+}
+
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
-	Log.Debugln("Getting default options...")
+	log.Debug("Getting default options...")
 
 	return &Options{
 		Concurrency:             10,
@@ -65,7 +67,7 @@ func DefaultOptions() *Options {
 
 // NewRunner returns a new runner
 func NewRunner() *Runner {
-	Log.Debugln("Creating new runner...")
+	log.Debug("Creating new runner...")
 
 	options := DefaultOptions()
 	newScope := goscope.NewScope()
@@ -79,8 +81,7 @@ func NewRunner() *Runner {
 // NewRunnerWithOptions returns a new runner with the specified options
 func NewRunnerWithOptions(options Options) *Runner {
 	SetLogLevel(&options)
-
-	Log.Debugln("Creating new runner with options...")
+	log.Debug("Creating new runner with options...")
 
 	// If no scope is specified, create a new one
 	if options.Scope == nil {
@@ -95,24 +96,27 @@ func NewRunnerWithOptions(options Options) *Runner {
 
 // Single captures a single target and returns the result
 func (r *Runner) Single(target string) (result Result) {
-	Log.Debugln("Running single...")
-	urls := r.initializeTargets(target)
-	if r.Options.Scope.IsTargetInScope(urls[0]) {
-		return r.worker(urls[0])
+	log.Debug("Running single...")
+	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+	target = normalizeTarget(target)         // Normalize target
+
+	if r.Options.Scope.IsTargetInScope(target) {
+		return r.worker(target)
 	}
+
 	return
 }
 
 // Multiple captures multiple targets and returns the results
 func (r *Runner) Multiple(targets []string) (results []Result) {
-	Log.Debugln("Running multiple...")
+	log.Debug("Running multiple...")
 
-	urls := r.initializeTargets(targets...)
+	r.Options.Scope.AddTargetToScope(targets...) // Add targets to scope
 	resultsChan := make(chan Result)
 
 	inScopeCount := 0 // Counter for in-scope URLs
 
-	for _, url := range urls {
+	for _, url := range normalizeTargets(targets...) {
 		if r.Options.Scope.IsTargetInScope(url) {
 			inScopeCount++ // Increment counter for in-scope URLs
 			go func(u string) {
@@ -133,14 +137,14 @@ func (r *Runner) Multiple(targets []string) (results []Result) {
 
 // MultipleStream captures multiple targets and streams the results using channels
 func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
-	Log.Debugln("Running multiple stream...")
-
+	log.Debug("Running multiple stream...")
 	defer close(results)
-	urls := r.initializeTargets(removeWhitespaces(targets...)...)
+
+	r.Options.Scope.AddTargetToScope(targets...) // Add targets to scope
 
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
-	for _, url := range urls {
+	for _, url := range normalizeTargets(targets...) {
 		if r.Options.Scope.IsTargetInScope(url) {
 			sem <- struct{}{}
 			wg.Add(1)
@@ -156,7 +160,7 @@ func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
 
 // getCustomFlags returns custom chromedp.ExecAllocatorOptions based on the Runner's Options.
 func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
-	// Log.Debugln("Getting custom flags...")
+	// log.Debug("Getting custom flags...")
 
 	var customFlags []chromedp.ExecAllocatorOption
 
@@ -168,6 +172,7 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 		customFlags = append(customFlags, chromedp.Flag("ignore-certificate-errors", true))
 	}
 
+	// Disable HTTP2
 	if r.Options.DisableHTTP2 {
 		customFlags = append(customFlags, chromedp.Flag("disable-http2", true))
 	}
@@ -175,51 +180,40 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	return customFlags
 }
 
-// makeURLs returns a list of URLs with http:// and https:// prefixes.
-func makeURLs(targets ...string) (urls []string) {
-	Log.Debugln("Making URLs...")
+// normalizeTargets ensures that targets have a scheme and a trailing slash.
+func normalizeTargets(targets ...string) (urls []string) {
+	log.Debug("Making URLs...")
 
 	for _, target := range targets {
-		// Remove http:// or https:// if they are there
-		cleanTarget := strings.TrimPrefix(strings.TrimPrefix(target, "http://"), "https://")
-
-		// Always append http and https versions
-		urls = append(urls, "http://"+cleanTarget)
-		urls = append(urls, "https://"+cleanTarget)
+		urls = append(urls, normalizeTarget(target))
 	}
 	return
 }
 
-// initializeTargets sets the scope and returns a list of URLs
-func (r *Runner) initializeTargets(targets ...string) (urls []string) {
-	Log.Debugln("Initializing targets...")
-	urls = makeURLs(targets...)
-	err := r.Options.Scope.AddInclude(urls...)
-	if err != nil {
-		Log.Warningln(err)
+// normalizeTarget ensures that the target has a scheme and a trailing slash.
+func normalizeTarget(target string) string {
+	target = strings.TrimSpace(target) // Trim whitespace
+
+	// Ensure the target has a scheme
+	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
+		target = "http://" + target
 	}
 
-	return
+	// Ensure the URL ends with a trailing slash
+	if !strings.HasSuffix(target, "/") {
+		target += "/"
+	}
+
+	return target
 }
 
+// SetLogLevel initiates the logger and sets the log level based on the options
 func SetLogLevel(options *Options) {
-	Log.Debugln("Setting logger level...")
-
-	if options.Verbose {
-		Log.SetLevel(relog.DebugLevel)
-	} else if options.Silence {
-		Log.SetLevel(relog.FatalLevel)
+	if options.Silence {
+		log.SetLevel(log.FatalLevel)
+	} else if options.Verbose {
+		log.SetLevel(log.DebugLevel)
 	} else {
-		Log.SetLevel(relog.InfoLevel)
+		log.SetLevel(log.InfoLevel)
 	}
-}
-
-// removeWhitespaces removes all leading and trailing whitespaces
-func removeWhitespaces(input ...string) []string {
-	var output []string
-	for _, str := range input {
-		cleanedStr := strings.TrimSpace(str)
-		output = append(output, cleanedStr)
-	}
-	return output
 }

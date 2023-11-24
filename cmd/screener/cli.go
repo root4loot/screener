@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/root4loot/goutils/log"
 	screener "github.com/root4loot/screener"
 )
 
@@ -20,6 +21,10 @@ type CLI struct {
 	Outfolder string
 }
 
+func init() {
+	log.Init("screener")
+}
+
 func main() {
 	cli := &CLI{screener.NewRunner(), "", "", false, false, ""}
 	cli.parseFlags()
@@ -28,7 +33,7 @@ func main() {
 	runner := cli.Runner
 	runner.Options = cli.Options
 	runner.Options.SaveScreenshots = true
-	screener.SetLogLevel(runner.Options)
+	screener.SetLogLevel((runner.Options))
 
 	if cli.hasStdin() {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -39,7 +44,7 @@ func main() {
 	} else if cli.hasInfile() {
 		targets, err := cli.readFileLines()
 		if err != nil {
-			screener.Log.Fatalf("Error reading file: %v", err)
+			log.Fatalf("Error reading file: %v", err)
 		}
 		processResults(runner, targets...)
 	} else if cli.hasTarget() {
