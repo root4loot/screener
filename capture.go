@@ -105,7 +105,6 @@ func (r *Runner) worker(rawURL string) Result {
 	}
 
 	// Before taking a screenshot, check if there was a redirect and FollowRedirects is false
-
 	if redirected && !r.Options.FollowRedirects {
 		log.Debugf("Redirect occurred and FollowRedirects is false. Skipping screenshot for %s", rawURL)
 		return Result{RequestURL: rawURL, FinalURL: finalURL, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
@@ -168,12 +167,7 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 		return "", err
 	}
 
-	if u.Port() != "" {
-		filename = u.Scheme + "_" + u.Host + ":" + u.Port() + "_" + u.Path
-	} else {
-		filename = u.Scheme + "_" + u.Host + u.Path
-	}
-
+	filename = u.Scheme + "_" + u.Host + u.Path
 	// Process the path to remove a trailing slash and prepend with an underscore
 	filename = strings.TrimSuffix(filename, "/")
 	filename = strings.ReplaceAll(filename, "/", "_")
