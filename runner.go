@@ -29,6 +29,7 @@ type Options struct {
 	UserAgent               string         // User agent to use
 	WaitForPageLoad         bool           // Wait for page to load before capturing
 	WaitTime                int            // Wait time before capturing (seconds)
+	Headless                bool           // Run in headless mode
 	// Resolvers               []string       // List of resolvers to use
 	FollowRedirects bool // Follow redirects
 	Silence         bool // Silence output
@@ -64,6 +65,7 @@ func DefaultOptions() *Options {
 		WaitForPageLoad:         true,
 		WaitTime:                1,
 		FollowRedirects:         true,
+		Headless:                true,
 	}
 }
 
@@ -172,7 +174,9 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	var customFlags []chromedp.ExecAllocatorOption
 
 	// Headless mode
-	customFlags = append(customFlags, chromedp.Flag("headless", true))
+	if r.Options.Headless {
+		customFlags = append(customFlags, chromedp.Flag("headless", true))
+	}
 
 	// Add custom flags based on the Runner's Options.
 	if r.Options.IgnoreCertificateErrors {

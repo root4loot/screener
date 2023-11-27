@@ -44,6 +44,7 @@ CONFIGURATIONS:
    -su,  --save-unique        save unique screenshots only                   (Default: false)
    -dh,  --disable-http2      disable HTTP2                                  (Default: true)
    -fr,  --follow-redirects   follow redirects                               (Default: true)
+   -hl,  --headless           run in headless mode                           (Default: true)
    -cw,  --capture-width      screenshot pixel width                         (Default: 1920)
    -ch,  --capture-height     screenshot pixel height                        (Default: 1080)
    -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
