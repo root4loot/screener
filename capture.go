@@ -12,20 +12,23 @@ import (
 	"time"
 
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goutils/log"
 )
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
-func (r *Runner) worker(url string) Result {
-	log.Debug("Running worker on ", url)
+func (r *Runner) worker(rawURL string) Result {
+	log.Debug("Running worker on ", rawURL)
 
-	var redirected bool // Flag to track redirects
-	shouldSave := true  // Flag to decide if the screenshot should be saved
+	var redirected bool // Flag to indicate if the URL was redirected
+	var finalURL string
+
+	shouldSave := true // Flag to decide if the screenshot should be saved
 
 	// Initialize the result.
-	result := Result{URL: url}
+	result := Result{RequestURL: rawURL}
 
 	// Create a master context for the whole operation.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
@@ -49,21 +52,36 @@ func (r *Runner) worker(url string) Result {
 	// Add tasks to emulate viewport and navigate to the URL.
 	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
-		chromedp.Navigate(url),
+		chromedp.Navigate(rawURL),
 	}
 
 	// Listen to network events
 	chromedp.ListenTarget(cctx, func(ev interface{}) {
 		switch ev := ev.(type) {
-		case *network.EventResponseReceived:
-			// Check if the response URL is different from the initial URL
-			if ev.Response.URL != url {
-				redirected = true
-				log.Infof("Redirect detected from %s to %s", url, ev.Response.URL)
-				if !r.Options.FollowRedirects {
-					// If FollowRedirects is false, cancel the context to stop loading
-					log.Infof("Cancelling context due to redirect")
-					cancelContext()
+		case *page.EventFrameNavigated:
+			// Check if it's the main frame (ParentID is empty for the main frame).
+			if ev.Frame.ParentID == "" {
+				finalURL = ev.Frame.URL
+				log.Debugf("Main frame navigated to %s", finalURL)
+
+				// Check if the frame's URL is different from the initial URL for redirect handling.
+				if finalURL != rawURL {
+					log.Debugf("Redirect detected from %s to %s", rawURL, finalURL)
+					redirected = true
+					result.FinalURL = finalURL
+					if !r.Options.FollowRedirects {
+						// If FollowRedirects is false, cancel the context to stop loading.
+						log.Infof("Cancelling context due to redirect")
+						cancelContext()
+					}
+
+					// update the rawURL to the final URL host
+					u, err := url.Parse(finalURL)
+					if err != nil {
+						log.Warnf("Could not parse final URL: %v", err)
+					} else {
+						rawURL = u.Scheme + "://" + u.Host
+					}
 				}
 			}
 		}
@@ -89,8 +107,8 @@ func (r *Runner) worker(url string) Result {
 	// Before taking a screenshot, check if there was a redirect and FollowRedirects is false
 
 	if redirected && !r.Options.FollowRedirects {
-		log.Debugf("Redirect occurred and FollowRedirects is false. Skipping screenshot for %s", url)
-		return Result{URL: url, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
+		log.Debugf("Redirect occurred and FollowRedirects is false. Skipping screenshot for %s", rawURL)
+		return Result{RequestURL: rawURL, FinalURL: finalURL, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
 	}
 
 	tasks = append(tasks, chromedp.CaptureScreenshot(&result.Image))
@@ -99,7 +117,7 @@ func (r *Runner) worker(url string) Result {
 	err := chromedp.Run(cctx, tasks)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			log.Warnf("Timeout exceeded for %s", url)
+			log.Warnf("Timeout exceeded for %s", rawURL)
 		} else {
 			result.Error = err
 		}
@@ -112,7 +130,7 @@ func (r *Runner) worker(url string) Result {
 		if err != nil {
 			log.Warnf("Could not perform uniqueness check: %v", err)
 		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", url)
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", rawURL)
 			shouldSave = false
 		}
 	}
@@ -123,9 +141,9 @@ func (r *Runner) worker(url string) Result {
 		}
 		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
 		if err != nil {
-			log.Warnf("Could not save screenshot for %s: %v", url, err)
+			log.Warnf("Could not save screenshot for %s: %v", rawURL, err)
 		} else {
-			log.Info("Screenshot", url, "saved to", r.Options.SaveScreenshotsPath)
+			log.Info("Screenshot", rawURL, "saved to", r.Options.SaveScreenshotsPath)
 		}
 	}
 
@@ -145,7 +163,7 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 	}
 
 	// Parse the URL to extract the scheme, host, and port.
-	u, err := url.Parse(result.URL)
+	u, err := url.Parse(result.RequestURL)
 	if err != nil {
 		return "", err
 	}

@@ -35,10 +35,11 @@ type Options struct {
 }
 
 type Result struct {
-	URL      string
-	Image    []byte
-	Resolver string
-	Error    error
+	RequestURL string
+	FinalURL   string
+	Image      []byte
+	Resolver   string
+	Error      error
 }
 
 func init() {
@@ -96,37 +97,43 @@ func NewRunnerWithOptions(options Options) *Runner {
 
 // Single captures a single target and returns the result
 func (r *Runner) Single(target string) (result Result) {
-	log.Debug("Running single...")
-	r.Options.Scope.AddTargetToScope(target) // Add target to scope
-	target = normalizeTarget(target)         // Normalize target
-
-	if r.Options.Scope.IsTargetInScope(target) {
-		return r.worker(target)
+	// log.Debug("Running single...")
+	if !strings.HasPrefix(target, "/") {
+		target = target + "/"
 	}
 
+	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+
+	if r.Options.Scope.IsTargetInScope(target) {
+		if !hasScheme(target) {
+			result := r.worker("http://" + target)
+			if strings.HasPrefix(result.FinalURL, "https://") {
+				return result
+			} else {
+				return r.worker("https://" + target)
+			}
+		}
+		return r.worker(target)
+	}
 	return
 }
 
 // Multiple captures multiple targets and returns the results
 func (r *Runner) Multiple(targets []string) (results []Result) {
 	log.Debug("Running multiple...")
-
-	r.Options.Scope.AddTargetToScope(targets...) // Add targets to scope
 	resultsChan := make(chan Result)
 
-	inScopeCount := 0 // Counter for in-scope URLs
+	inScopeCount := 0
 
-	for _, url := range normalizeTargets(targets...) {
-		if r.Options.Scope.IsTargetInScope(url) {
-			inScopeCount++ // Increment counter for in-scope URLs
-			go func(u string) {
-				result := r.worker(u)
-				resultsChan <- result
-			}(url)
-		}
+	for _, target := range targets {
+		inScopeCount++
+		go func(t string) {
+			result := r.Single(t)
+			resultsChan <- result
+		}(target)
 	}
 
-	for i := 0; i < inScopeCount; i++ { // Range over in-scope URLs only
+	for i := 0; i < inScopeCount; i++ {
 		result := <-resultsChan
 		results = append(results, result)
 	}
@@ -140,20 +147,16 @@ func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
 	log.Debug("Running multiple stream...")
 	defer close(results)
 
-	r.Options.Scope.AddTargetToScope(targets...) // Add targets to scope
-
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
-	for _, url := range normalizeTargets(targets...) {
-		if r.Options.Scope.IsTargetInScope(url) {
-			sem <- struct{}{}
-			wg.Add(1)
-			go func(u string) {
-				defer func() { <-sem }()
-				defer wg.Done()
-				results <- r.worker(u)
-			}(url)
-		}
+	for _, target := range targets {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(t string) {
+			defer func() { <-sem }()
+			defer wg.Done()
+			results <- r.Single(t)
+		}(target)
 	}
 	wg.Wait()
 }
@@ -205,6 +208,11 @@ func normalizeTarget(target string) string {
 	}
 
 	return target
+}
+
+func // hasScheme checks if the target has a scheme
+hasScheme(target string) bool {
+	return strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://")
 }
 
 // SetLogLevel initiates the logger and sets the log level based on the options

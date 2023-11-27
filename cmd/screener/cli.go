@@ -60,6 +60,7 @@ func processResults(runner *screener.Runner, targets ...string) {
 	// Start capturing URLs using multiple goroutines
 	go runner.MultipleStream(results, targets...)
 
+	// Need to do something with the results
 	for result := range results {
 		_ = result
 	}
