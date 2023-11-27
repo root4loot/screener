@@ -1,6 +1,7 @@
 package screener
 
 import (
+	"net/url"
 	"strings"
 	"sync"
 
@@ -98,11 +99,14 @@ func NewRunnerWithOptions(options Options) *Runner {
 // Single captures a single target and returns the result
 func (r *Runner) Single(target string) (result Result) {
 	// log.Debug("Running single...")
-	if !strings.HasPrefix(target, "/") {
-		target = target + "/"
-	}
 
-	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+	// NORMALIZE TARGET
+	normalizedTarget, err := normalize(target)
+	if err != nil {
+		log.Warnf("Could not normalize target: %v", err)
+		return
+	}
+	r.Options.Scope.AddTargetToScope(normalizedTarget) // Add target to scope
 
 	if r.Options.Scope.IsTargetInScope(target) {
 		if !hasScheme(target) {
@@ -183,31 +187,35 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	return customFlags
 }
 
-// normalizeTargets ensures that targets have a scheme and a trailing slash.
-func normalizeTargets(targets ...string) (urls []string) {
-	log.Debug("Making URLs...")
-
-	for _, target := range targets {
-		urls = append(urls, normalizeTarget(target))
-	}
-	return
-}
-
-// normalizeTarget ensures that the target has a scheme and a trailing slash.
-func normalizeTarget(target string) string {
+// normalize ensures that the target has a scheme and a trailing slash.
+func normalize(target string) (string, error) {
 	target = strings.TrimSpace(target) // Trim whitespace
 
-	// Ensure the target has a scheme
-	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
-		target = "http://" + target
+	// Add temporary scheme if missing
+	if !hasScheme(target) {
+		target = "x://" + target
+	}
+
+	// Parse the target
+	u, err := url.Parse(target)
+	if err != nil {
+		return "", err
 	}
 
 	// Ensure the URL ends with a trailing slash
-	if !strings.HasSuffix(target, "/") {
-		target += "/"
+	if !strings.HasSuffix(target, u.Path) {
+		u.Path += "/"
 	}
 
-	return target
+	// Set scheme to https if port is 443
+	if u.Port() == "443" {
+		u.Scheme = "https"
+	} else if u.Port() == "80" {
+		u.Scheme = "http"
+	}
+
+	target = strings.TrimPrefix(target, "x://") // Remove temporary scheme
+	return target, nil
 }
 
 func // hasScheme checks if the target has a scheme
