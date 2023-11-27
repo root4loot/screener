@@ -119,7 +119,8 @@ func (c *CLI) readFileLines() (lines []string, err error) {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		lines = append(lines, strings.TrimSpace(scanner.Text()))
 	}
+
 	return
 }
