@@ -16,11 +16,11 @@ func (c *CLI) banner() {
 func (c *CLI) usage() {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
 
-	fmt.Fprintf(w, "Usage:\t%s [options] (-u <url> | -i <urls.txt>)\n\n", os.Args[0])
+	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n\n", os.Args[0])
 
 	fmt.Fprintf(w, "\nINPUT:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-u", "--url", "single URL")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t   %s\n", "-i", "--infile", " file containing URLs (one per line)")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-t", "--target", "single target")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t   %s\n", "-i", "--infile", " file containing targets (one per line)")
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
@@ -48,8 +48,8 @@ func (c *CLI) usage() {
 // parseAndSetOptions parses the command line options and sets the options
 func (c *CLI) parseFlags() {
 	// TARGET
-	flag.StringVar(&c.TargetURL, "url", "", "")
-	flag.StringVar(&c.TargetURL, "u", "", "")
+	flag.StringVar(&c.TargetURL, "target", "", "")
+	flag.StringVar(&c.TargetURL, "t", "", "")
 	flag.StringVar(&c.Infile, "i", "", "")
 	flag.StringVar(&c.Infile, "infile", "", "")
 
@@ -71,7 +71,7 @@ func (c *CLI) parseFlags() {
 	flag.IntVar(&c.Options.WaitTime, "wait-time", screener.DefaultOptions().WaitTime, "")
 	flag.IntVar(&c.Options.WaitTime, "wt", screener.DefaultOptions().WaitTime, "")
 	flag.IntVar(&c.Options.Timeout, "timeout", screener.DefaultOptions().Timeout, "")
-	flag.IntVar(&c.Options.Timeout, "t", screener.DefaultOptions().Timeout, "")
+	flag.IntVar(&c.Options.Timeout, "to", screener.DefaultOptions().Timeout, "")
 	flag.StringVar(&c.Options.UserAgent, "user-agent", screener.DefaultOptions().UserAgent, "")
 	flag.StringVar(&c.Options.UserAgent, "ua", screener.DefaultOptions().UserAgent, "")
 	flag.StringVar(&c.Outfolder, "outfolder", screener.DefaultOptions().SaveScreenshotsPath, "")

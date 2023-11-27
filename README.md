@@ -30,11 +30,12 @@ docker run -it screener -h
 ## Usage
 
 ```
-Usage: screener [options] (-u <url> | -i <urls.txt>)
+Usage: screener [options] (-u <target> | -i <targets.txt>)
+
 
 INPUT:
-   -u,   --url                single URL
-   -i,   --infile             file containing URLs (one per line)
+   -t,   --target             single target
+   -i,   --infile             file containing targets (one per line)
 
 CONFIGURATIONS:
    -c,   --concurrency        number of concurrent requests                  (Default: 10)
@@ -56,49 +57,50 @@ OUTPUT:
         --version             display version
 ```
 
+## Example
 
-## Example Usage
-
-### Screenshotting URLs in file
-In this example, Screener reads URLs from urls.txt and waits for the web pages to fully load before capturing screenshots.
+### Screenshotting a Single Target
+Capture a screenshot from a single URL. If the URL scheme (http/https) is not specified, then it will handle both:
 
 ```sh
-✗ screener -i urls.txt --wait-page
-[screener] (INFO) Screenshot http://example.com saved to ./screenshots
-[screener] (INFO) Screenshot https://example.com saved to ./screenshots
-[screener] (INFO) Screenshot http://hackerone.com saved to ./screenshots
-[screener] (INFO) Screenshot https://hackerone.com saved to ./screenshots
-[screener] (INFO) Screenshot http://google.com saved to ./screenshots 
-[screener] (INFO) Screenshot http://bugcrowd.com saved to ./screenshots
-[screener] (INFO) Screenshot https://bugcrowd.com saved to ./screenshots
-[screener] (INFO) Screenshot https://google.com saved to ./screenshots
-[screener] (INFO) Screenshot https://facebook.com saved to ./screenshots 
-[screener] (INFO) Screenshot http://facebook.com saved to ./screenshots
-[screener] (INFO) Screenshot http://yahoo.com saved to ./screenshots   
-[screener] (INFO) Screenshot https://yahoo.com saved to ./screenshots
-[screener] (INFO) Screenshot http://github.com saved to ./screenshots
-[screener] (INFO) Screenshot https://github.com saved to ./screenshots
+✗ screener -t "example.com"
+# Captures both http://example.com/ and https://example.com/
+[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
+[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots
+
+✗ screener -t "google.com"
+# Captures https://www.google.com (redirects from http to https)
+[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots 
+```
+
+### Screenshotting URLs from a File
+Capture screenshots from multiple URLs listed in a file but wait for pages to load first and only save unique images.
+
+```sh
+✗ screener -i urls.txt --wait-page --save-unique 
+[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
+[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                 
+[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
+[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots                                                                                                                                                                                                                                                                                            
+[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots                                                                                                                                                                                                                                                                                               
+[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots                                                                                                                                                                                                                                                                                             
+[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots                                                                                                                                                                                                                                                                                            
+[screener] (INFO) Screenshot https://www.bugcrowd.com saved to ./screenshots 
 ```
 
 ## Piping URLs from SDIN
-Pipe URLs from a file to screener using standard input (STDIN).
+Stream URLs to Screener, capturing screenshots as they are received:
 
 ```sh
 ✗ cat urls.txt | screener                        
-[screener] (INFO) Screenshot http://example.com saved to ./screenshots
-[screener] (INFO) Screenshot https://example.com saved to ./screenshots
-[screener] (INFO) Screenshot http://hackerone.com saved to ./screenshots
-[screener] (INFO) Screenshot https://hackerone.com saved to ./screenshots
-[screener] (INFO) Screenshot http://google.com saved to ./screenshots 
-[screener] (INFO) Screenshot http://bugcrowd.com saved to ./screenshots
-[screener] (INFO) Screenshot https://bugcrowd.com saved to ./screenshots
-[screener] (INFO) Screenshot https://google.com saved to ./screenshots
-[screener] (INFO) Screenshot https://facebook.com saved to ./screenshots 
-[screener] (INFO) Screenshot http://facebook.com saved to ./screenshots
-[screener] (INFO) Screenshot http://yahoo.com saved to ./screenshots   
-[screener] (INFO) Screenshot https://yahoo.com saved to ./screenshots
-[screener] (INFO) Screenshot http://github.com saved to ./screenshots
-[screener] (INFO) Screenshot https://github.com saved to ./screenshots
+[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots
+[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots
+[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots
+[screener] (INFO) Screenshot https://www.bugcrowd.com saved to ./screenshots
+[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots
+[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots
+[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots
+[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots
 ```
 
 
@@ -134,14 +136,18 @@ func main() {
 	// Set options
 	options := screener.Options{
 		Concurrency:             10,
-		Timeout:                 15,
+		Timeout:                 10,
 		SaveScreenshots:         true,
-		WaitForPageBody:         false,
+		SaveScreenshotsPath:     "customfolder",
+		WaitForPageLoad:         true,
+		WaitTime:                1,
 		FollowRedirects:         true,
 		DisableHTTP2:            true,
 		IgnoreCertificateErrors: true,
 		Verbose:                 false,
 		Silence:                 true,
+		CaptureWidth:            1920,
+		CaptureHeight:           1080,
 	}
 
 	// Create a screener runner with options
@@ -155,7 +161,7 @@ func main() {
 
 	// Process the results as they come in
 	for result := range results {
-		fmt.Println(result.URL, result.Error, len(result.Image))
+		fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
 	}
 }
 
