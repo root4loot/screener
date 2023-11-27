@@ -100,15 +100,15 @@ func NewRunnerWithOptions(options Options) *Runner {
 func (r *Runner) Single(target string) (result Result) {
 	// log.Debug("Running single...")
 
-	// NORMALIZE TARGET
+	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
 		return
 	}
-	r.Options.Scope.AddTargetToScope(normalizedTarget) // Add target to scope
 
-	if r.Options.Scope.IsTargetInScope(target) {
+	if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
 		if !hasScheme(target) {
 			result := r.worker("http://" + target)
 			if strings.HasPrefix(result.FinalURL, "https://") {
