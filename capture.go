@@ -168,14 +168,18 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 		return "", err
 	}
 
-	// Process the path to remove a trailing slash and prepend with an underscore
-	path := strings.TrimSuffix(u.Path, "/")
-	if path != "" {
-		path = "_" + path
+	if u.Port() != "" {
+		filename = u.Scheme + "_" + u.Host + ":" + u.Port() + "_" + u.Path
+	} else {
+		filename = u.Scheme + "_" + u.Host + u.Path
 	}
 
+	// Process the path to remove a trailing slash and prepend with an underscore
+	filename = strings.TrimSuffix(filename, "/")
+	filename = strings.ReplaceAll(filename, "/", "_")
+
 	// Create a filename that includes the scheme, host, and port.
-	fileName := filepath.Join(folderPath, u.Scheme+"_"+u.Host+path+".png")
+	fileName := filepath.Join(folderPath, filename+".png")
 
 	// Open the file for writing. Ensure the filename is in lower case.
 	file, err := os.Create(strings.ToLower(fileName))
