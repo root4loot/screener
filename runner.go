@@ -212,13 +212,17 @@ func normalize(target string) (string, error) {
 	}
 
 	// Set scheme to https if port is 443
-	if u.Port() == "443" {
-		u.Scheme = "https"
-	} else if u.Port() == "80" {
-		u.Scheme = "http"
+	if u.Port() != "" {
+		if u.Port() == "443" {
+			u.Scheme = "https"
+		} else if u.Port() == "80" {
+			u.Scheme = "http"
+		}
+		u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
 	}
 
-	target = strings.TrimPrefix(target, "x://") // Remove temporary scheme
+	target = strings.TrimPrefix(u.String(), "x://") // Remove temporary scheme
+
 	return target, nil
 }
 

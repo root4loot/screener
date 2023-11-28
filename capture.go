@@ -80,7 +80,11 @@ func (r *Runner) worker(rawURL string) Result {
 					if err != nil {
 						log.Warnf("Could not parse final URL: %v", err)
 					} else {
-						rawURL = u.Scheme + "://" + u.Host
+						// remove the port if it's the default port for the scheme.
+						if u.Scheme == "http" && u.Port() == "80" || u.Scheme == "https" && u.Port() == "443" {
+							u.Host = strings.Split(u.Host, ":")[0]
+						}
+						rawURL = u.Scheme + "://" + u.Host + "/"
 					}
 				}
 			}
@@ -167,7 +171,13 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 		return "", err
 	}
 
+	// remove the port if it's the default port for the scheme.
+	if u.Scheme == "http" || u.Scheme == "https" && u.Port() == "80" || u.Port() == "443" {
+		u.Host = strings.Split(u.Host, ":")[0]
+	}
+
 	filename = u.Scheme + "_" + u.Host + u.Path
+
 	// Process the path to remove a trailing slash and prepend with an underscore
 	filename = strings.TrimSuffix(filename, "/")
 	filename = strings.ReplaceAll(filename, "/", "_")
