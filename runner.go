@@ -12,6 +12,8 @@ import (
 
 type Runner struct {
 	Options *Options
+	visited map[string]bool
+	mutex   sync.Mutex
 }
 
 // Options contains options for the runner
@@ -79,6 +81,7 @@ func NewRunner() *Runner {
 
 	return &Runner{
 		Options: options,
+		visited: make(map[string]bool),
 	}
 }
 
@@ -95,31 +98,41 @@ func NewRunnerWithOptions(options Options) *Runner {
 
 	return &Runner{
 		Options: &options,
+		visited: make(map[string]bool),
 	}
 }
 
 // Single captures a single target and returns the result
 func (r *Runner) Single(target string) (result Result) {
-	// log.Debug("Running single...")
-
-	r.Options.Scope.AddTargetToScope(target) // Add target to scope
-
+	// Normalize target first without locking
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
 		return
 	}
 
+	// Locking for visited check and adding target to scope
+	r.mutex.Lock()
+	if r.visited[normalizedTarget] {
+		r.mutex.Unlock()
+		return // Target already visited
+	}
+	r.visited[normalizedTarget] = true
+
+	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+	r.mutex.Unlock()
+
+	// Continue with the rest of the function
 	if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
-		if !hasScheme(target) {
-			result := r.worker("http://" + target)
+		if !hasScheme(normalizedTarget) {
+			result := r.worker("http://" + normalizedTarget)
 			if strings.HasPrefix(result.FinalURL, "https://") {
 				return result
 			} else {
-				return r.worker("https://" + target)
+				return r.worker("https://" + normalizedTarget)
 			}
 		}
-		return r.worker(target)
+		return r.worker(normalizedTarget)
 	}
 	return
 }
