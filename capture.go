@@ -41,6 +41,43 @@ func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, 
 	return masterContext, chromeContext, cancelMasterContext, cancelChromeContext
 }
 
+// extractMetaRefreshURL parses the HTML content and extracts the meta refresh URL, if present.
+func extractMetaRefreshURL(htmlContent string) string {
+	doc, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		// Handle the error as needed
+		return ""
+	}
+
+	var f func(*html.Node) string
+	f = func(n *html.Node) string {
+		if n.Type == html.ElementNode && n.Data == "meta" {
+			for _, a := range n.Attr {
+				if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
+					for _, a := range n.Attr {
+						if a.Key == "content" {
+							// Extract URL from content
+							parts := strings.Split(a.Val, "URL=")
+							if len(parts) > 1 {
+								return strings.TrimSpace(parts[1])
+							}
+						}
+					}
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			url := f(c)
+			if url != "" {
+				return url
+			}
+		}
+		return ""
+	}
+
+	return f(doc)
+}
+
 func (r *Runner) worker(rawURL string) Result {
 	log.Debug("Running worker on ", rawURL)
 
@@ -125,44 +162,11 @@ func (r *Runner) worker(rawURL string) Result {
 		return result
 	}
 
-	// Function to check for meta refresh tag and extract URL
-	extractMetaRefreshURL := func(htmlContent string) (string, bool) {
-		doc, err := html.Parse(strings.NewReader(htmlContent))
-		if err != nil {
-			// handle error
-			return "", false
-		}
-		var f func(*html.Node) (string, bool)
-		f = func(n *html.Node) (string, bool) {
-			if n.Type == html.ElementNode && n.Data == "meta" {
-				for _, a := range n.Attr {
-					if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
-						for _, a := range n.Attr {
-							if a.Key == "content" {
-								// extract URL from content
-								parts := strings.Split(a.Val, "URL=")
-								if len(parts) > 1 {
-									return strings.TrimSpace(parts[1]), true
-								}
-							}
-						}
-					}
-				}
-			}
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				url, found := f(c)
-				if found {
-					return url, true
-				}
-			}
-			return "", false
-		}
-		return f(doc)
-	}
-
-	// Check for meta refresh redirect
-	if url, found := extractMetaRefreshURL(htmlContent); found && r.Options.FollowRedirects {
-		r.worker(url)
+	// Check for meta refresh
+	metaRefreshUrl := extractMetaRefreshURL(htmlContent)
+	if metaRefreshUrl != "" && r.Options.FollowRedirects {
+		log.Debugf("Meta refresh detected for %s. Redirecting to %s", rawURL, metaRefreshUrl)
+		return r.worker(metaRefreshUrl)
 	}
 
 	// If SaveUnique is enabled, check for uniqueness
