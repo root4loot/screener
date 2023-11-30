@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -81,8 +80,7 @@ func extractMetaRefreshURL(htmlContent string) string {
 func (r *Runner) worker(rawURL string) Result {
 	log.Debug("Running worker on ", rawURL)
 
-	shouldSave := true  // Flag to decide if the screenshot should be saved
-	var redirected bool // Flag to indicate if the URL was redirected
+	shouldSave := true // Flag to decide if the screenshot should be saved
 	var finalURL string
 	var htmlContent string
 
@@ -112,7 +110,6 @@ func (r *Runner) worker(rawURL string) Result {
 
 				if finalURL != rawURL {
 					log.Debugf("Redirect detected from %s to %s", rawURL, finalURL)
-					redirected = true
 					result.FinalURL = finalURL
 					if !r.Options.FollowRedirects {
 						log.Infof("Cancelling context due to redirect")
@@ -143,12 +140,6 @@ func (r *Runner) worker(rawURL string) Result {
 	// Wait for the specified time before capturing the screenshot
 	if r.Options.WaitTime > 0 {
 		time.Sleep(time.Duration(r.Options.WaitTime) * time.Second)
-	}
-
-	// Before taking a screenshot, check if there was a redirect and FollowRedirects is false
-	if redirected && !r.Options.FollowRedirects {
-		log.Debugf("Redirect occurred and FollowRedirects is false. Skipping screenshot for %s", rawURL)
-		return Result{RequestURL: rawURL, FinalURL: finalURL, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
 	}
 
 	// Run the tasks in the context.
