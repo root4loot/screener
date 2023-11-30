@@ -228,10 +228,11 @@ func normalize(target string) (string, error) {
 	if u.Port() != "" {
 		if u.Port() == "443" {
 			u.Scheme = "https"
+			u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
 		} else if u.Port() == "80" {
 			u.Scheme = "http"
+			u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
 		}
-		u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
 	}
 
 	target = strings.TrimPrefix(u.String(), "x://") // Remove temporary scheme
