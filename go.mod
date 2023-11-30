@@ -12,8 +12,8 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/yl2chen/cidranger v1.0.2 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -22,4 +22,5 @@ require (
 	github.com/chromedp/chromedp v0.9.3
 	github.com/root4loot/goscope v0.0.0-20231124190357-df9f3447c461
 	github.com/root4loot/goutils v0.0.0-20231121105034-79daf697d138
+	golang.org/x/net v0.19.0
 )

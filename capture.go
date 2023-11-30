@@ -15,6 +15,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goutils/log"
+	"golang.org/x/net/html"
 )
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
@@ -24,6 +25,7 @@ func (r *Runner) worker(rawURL string) Result {
 
 	var redirected bool // Flag to indicate if the URL was redirected
 	var finalURL string
+	var htmlContent string
 
 	shouldSave := true // Flag to decide if the screenshot should be saved
 
@@ -53,6 +55,7 @@ func (r *Runner) worker(rawURL string) Result {
 	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
 		chromedp.Navigate(rawURL),
+		chromedp.OuterHTML("html", &htmlContent),
 	}
 
 	// Listen to network events
@@ -125,6 +128,46 @@ func (r *Runner) worker(rawURL string) Result {
 			result.Error = err
 		}
 		return result
+	}
+
+	// Function to check for meta refresh tag and extract URL
+	extractMetaRefreshURL := func(htmlContent string) (string, bool) {
+		doc, err := html.Parse(strings.NewReader(htmlContent))
+		if err != nil {
+			// handle error
+			return "", false
+		}
+		var f func(*html.Node) (string, bool)
+		f = func(n *html.Node) (string, bool) {
+			if n.Type == html.ElementNode && n.Data == "meta" {
+				for _, a := range n.Attr {
+					if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
+						for _, a := range n.Attr {
+							if a.Key == "content" {
+								// extract URL from content
+								parts := strings.Split(a.Val, "URL=")
+								if len(parts) > 1 {
+									return strings.TrimSpace(parts[1]), true
+								}
+							}
+						}
+					}
+				}
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				url, found := f(c)
+				if found {
+					return url, true
+				}
+			}
+			return "", false
+		}
+		return f(doc)
+	}
+
+	// Check for meta refresh redirect
+	if url, found := extractMetaRefreshURL(htmlContent); found && r.Options.FollowRedirects {
+		r.worker(url)
 	}
 
 	// If SaveUnique is enabled, check for uniqueness
