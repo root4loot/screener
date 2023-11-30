@@ -20,21 +20,9 @@ import (
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
-func (r *Runner) worker(rawURL string) Result {
-	log.Debug("Running worker on ", rawURL)
-
-	var redirected bool // Flag to indicate if the URL was redirected
-	var finalURL string
-	var htmlContent string
-
-	shouldSave := true // Flag to decide if the screenshot should be saved
-
-	// Initialize the result.
-	result := Result{RequestURL: rawURL}
-
+func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, context.CancelFunc, context.CancelFunc) {
 	// Create a master context for the whole operation.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
-	defer cancel()
+	masterContext, cancelMasterContext := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
 
 	// Create custom chromedp options by appending the custom flags to the default options.
 	opts := append(chromedp.DefaultExecAllocatorOptions[:], r.GetCustomFlags()...)
@@ -45,21 +33,39 @@ func (r *Runner) worker(rawURL string) Result {
 	}
 
 	// Create an ExecAllocator with the custom options.
-	allocator, _ := chromedp.NewExecAllocator(ctx, opts...)
+	allocator, _ := chromedp.NewExecAllocator(masterContext, opts...)
 
 	// Create a context with the custom allocator.
-	cctx, cancelContext := chromedp.NewContext(allocator)
-	defer cancelContext()
+	chromeContext, cancelChromeContext := chromedp.NewContext(allocator)
 
-	// Add tasks to emulate viewport and navigate to the URL.
+	return masterContext, chromeContext, cancelMasterContext, cancelChromeContext
+}
+
+func (r *Runner) worker(rawURL string) Result {
+	log.Debug("Running worker on ", rawURL)
+
+	shouldSave := true  // Flag to decide if the screenshot should be saved
+	var redirected bool // Flag to indicate if the URL was redirected
+	var finalURL string
+	var htmlContent string
+
+	// Initialize the result.
+	result := Result{RequestURL: rawURL}
+
+	masterContext, chromeContext, cancelMasterContext, cancelChromeContext := r.initializeChromeDPContext()
+	defer cancelMasterContext()
+	defer cancelChromeContext()
+
+	// Add tasks
 	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
 		chromedp.Navigate(rawURL),
 		chromedp.OuterHTML("html", &htmlContent),
+		chromedp.CaptureScreenshot(&result.Image),
 	}
 
 	// All chromedp.ListenTarget calls
-	chromedp.ListenTarget(cctx, func(ev interface{}) {
+	chromedp.ListenTarget(chromeContext, func(ev interface{}) {
 		switch ev := ev.(type) {
 		case *page.EventFrameNavigated:
 			// Handling EventFrameNavigated
@@ -73,7 +79,7 @@ func (r *Runner) worker(rawURL string) Result {
 					result.FinalURL = finalURL
 					if !r.Options.FollowRedirects {
 						log.Infof("Cancelling context due to redirect")
-						cancelContext()
+						cancelChromeContext()
 					}
 					// update the rawURL to the final URL host
 					u, err := url.Parse(finalURL)
@@ -100,7 +106,7 @@ func (r *Runner) worker(rawURL string) Result {
 	// only after all network activity has completed, providing a fully loaded page.
 	if r.Options.WaitForPageLoad {
 		// Listen for network events to track the status of network requests.
-		chromedp.ListenTarget(cctx, func(ev interface{}) {
+		chromedp.ListenTarget(chromeContext, func(ev interface{}) {
 			if _, ok := ev.(*network.EventLoadingFinished); ok {
 				// A network event indicates that the page is fully loaded.
 				shouldSave = true
@@ -119,12 +125,10 @@ func (r *Runner) worker(rawURL string) Result {
 		return Result{RequestURL: rawURL, FinalURL: finalURL, Error: fmt.Errorf("redirect occurred but FollowRedirects is false")}
 	}
 
-	tasks = append(tasks, chromedp.CaptureScreenshot(&result.Image))
-
 	// Run the tasks in the context.
-	err := chromedp.Run(cctx, tasks)
+	err := chromedp.Run(chromeContext, tasks)
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if masterContext.Err() == context.DeadlineExceeded {
 			log.Warnf("Timeout exceeded for %s", rawURL)
 		} else {
 			result.Error = err
