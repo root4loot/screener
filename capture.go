@@ -19,64 +19,6 @@ import (
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
-func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, context.CancelFunc, context.CancelFunc) {
-	// Create a master context for the whole operation.
-	masterContext, cancelMasterContext := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
-
-	// Create custom chromedp options by appending the custom flags to the default options.
-	opts := append(chromedp.DefaultExecAllocatorOptions[:], r.GetCustomFlags()...)
-
-	// Set custom user-agent if provided in the options.
-	if r.Options.UserAgent != "" {
-		opts = append(opts, chromedp.UserAgent(r.Options.UserAgent))
-	}
-
-	// Create an ExecAllocator with the custom options.
-	allocator, _ := chromedp.NewExecAllocator(masterContext, opts...)
-
-	// Create a context with the custom allocator.
-	chromeContext, cancelChromeContext := chromedp.NewContext(allocator)
-
-	return masterContext, chromeContext, cancelMasterContext, cancelChromeContext
-}
-
-// extractMetaRefreshURL parses the HTML content and extracts the meta refresh URL, if present.
-func extractMetaRefreshURL(htmlContent string) string {
-	doc, err := html.Parse(strings.NewReader(htmlContent))
-	if err != nil {
-		// Handle the error as needed
-		return ""
-	}
-
-	var f func(*html.Node) string
-	f = func(n *html.Node) string {
-		if n.Type == html.ElementNode && n.Data == "meta" {
-			for _, a := range n.Attr {
-				if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
-					for _, a := range n.Attr {
-						if a.Key == "content" {
-							// Extract URL from content
-							parts := strings.Split(a.Val, "URL=")
-							if len(parts) > 1 {
-								return strings.TrimSpace(parts[1])
-							}
-						}
-					}
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			url := f(c)
-			if url != "" {
-				return url
-			}
-		}
-		return ""
-	}
-
-	return f(doc)
-}
-
 func (r *Runner) worker(rawURL string) Result {
 	log.Debug("Running worker on ", rawURL)
 
@@ -246,6 +188,64 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 	}
 
 	return fileName, nil
+}
+
+func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, context.CancelFunc, context.CancelFunc) {
+	// Create a master context for the whole operation.
+	masterContext, cancelMasterContext := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
+
+	// Create custom chromedp options by appending the custom flags to the default options.
+	opts := append(chromedp.DefaultExecAllocatorOptions[:], r.GetCustomFlags()...)
+
+	// Set custom user-agent if provided in the options.
+	if r.Options.UserAgent != "" {
+		opts = append(opts, chromedp.UserAgent(r.Options.UserAgent))
+	}
+
+	// Create an ExecAllocator with the custom options.
+	allocator, _ := chromedp.NewExecAllocator(masterContext, opts...)
+
+	// Create a context with the custom allocator.
+	chromeContext, cancelChromeContext := chromedp.NewContext(allocator)
+
+	return masterContext, chromeContext, cancelMasterContext, cancelChromeContext
+}
+
+// extractMetaRefreshURL parses the HTML content and extracts the meta refresh URL, if present.
+func extractMetaRefreshURL(htmlContent string) string {
+	doc, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		// Handle the error as needed
+		return ""
+	}
+
+	var f func(*html.Node) string
+	f = func(n *html.Node) string {
+		if n.Type == html.ElementNode && n.Data == "meta" {
+			for _, a := range n.Attr {
+				if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
+					for _, a := range n.Attr {
+						if a.Key == "content" {
+							// Extract URL from content
+							parts := strings.Split(a.Val, "URL=")
+							if len(parts) > 1 {
+								return strings.TrimSpace(parts[1])
+							}
+						}
+					}
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			url := f(c)
+			if url != "" {
+				return url
+			}
+		}
+		return ""
+	}
+
+	return f(doc)
 }
 
 func checkHashUnique(imageData []byte) (bool, error) {
