@@ -58,26 +58,23 @@ func (r *Runner) worker(rawURL string) Result {
 		chromedp.OuterHTML("html", &htmlContent),
 	}
 
-	// Listen to network events
+	// All chromedp.ListenTarget calls
 	chromedp.ListenTarget(cctx, func(ev interface{}) {
 		switch ev := ev.(type) {
 		case *page.EventFrameNavigated:
-			// Check if it's the main frame (ParentID is empty for the main frame).
+			// Handling EventFrameNavigated
 			if ev.Frame.ParentID == "" {
 				finalURL = ev.Frame.URL
 				log.Debugf("Main frame navigated to %s", finalURL)
 
-				// Check if the frame's URL is different from the initial URL for redirect handling.
 				if finalURL != rawURL {
 					log.Debugf("Redirect detected from %s to %s", rawURL, finalURL)
 					redirected = true
 					result.FinalURL = finalURL
 					if !r.Options.FollowRedirects {
-						// If FollowRedirects is false, cancel the context to stop loading.
 						log.Infof("Cancelling context due to redirect")
 						cancelContext()
 					}
-
 					// update the rawURL to the final URL host
 					u, err := url.Parse(finalURL)
 					if err != nil {
@@ -90,6 +87,11 @@ func (r *Runner) worker(rawURL string) Result {
 						rawURL = u.Scheme + "://" + u.Host + "/"
 					}
 				}
+			}
+		case *network.EventLoadingFinished:
+			// Handling EventLoadingFinished
+			if r.Options.WaitForPageLoad {
+				shouldSave = true
 			}
 		}
 	})
