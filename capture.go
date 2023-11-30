@@ -154,6 +154,8 @@ func (r *Runner) worker(rawURL string) Result {
 }
 
 func (result Result) WriteToFolder(folderPath string) (filename string, err error) {
+	var u *url.URL
+
 	// Check if the screenshot data is empty.
 	if len(result.Image) == 0 {
 		return "", nil // Skip saving if data is empty.
@@ -166,9 +168,20 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 	}
 
 	// Parse the URL to extract the scheme, host, and port.
-	u, err := url.Parse(result.RequestURL)
+	requestURL, err := url.Parse(result.RequestURL)
 	if err != nil {
 		return "", err
+	}
+
+	// Parse the URL to extract the scheme, host, and port.
+	u, err = url.Parse(result.FinalURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Remove path from the URL unless specified in target.
+	if requestURL.Path == "" {
+		u.Path = ""
 	}
 
 	// remove the port if it's the default port for the scheme.
