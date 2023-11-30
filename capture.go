@@ -95,24 +95,13 @@ func (r *Runner) worker(rawURL string) Result {
 				}
 			}
 		case *network.EventLoadingFinished:
-			// Handling EventLoadingFinished
+			// WaitForPageLoad, when enabled, ensures that the screenshot is taken
+			// only after all network activity has completed, providing a fully loaded page.
 			if r.Options.WaitForPageLoad {
 				shouldSave = true
 			}
 		}
 	})
-
-	// WaitForPageLoad, when enabled, ensures that the screenshot is taken
-	// only after all network activity has completed, providing a fully loaded page.
-	if r.Options.WaitForPageLoad {
-		// Listen for network events to track the status of network requests.
-		chromedp.ListenTarget(chromeContext, func(ev interface{}) {
-			if _, ok := ev.(*network.EventLoadingFinished); ok {
-				// A network event indicates that the page is fully loaded.
-				shouldSave = true
-			}
-		})
-	}
 
 	// Wait for the specified time before capturing the screenshot
 	if r.Options.WaitTime > 0 {
