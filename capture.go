@@ -181,6 +181,7 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 	// Process the path to remove a trailing slash and prepend with an underscore
 	filename = strings.TrimSuffix(filename, "/")
 	filename = strings.ReplaceAll(filename, "/", "_")
+	filename = strings.ReplaceAll(filename, ":", "-")
 
 	// Create a filename that includes the scheme, host, and port.
 	fileName := filepath.Join(folderPath, filename+".png")
