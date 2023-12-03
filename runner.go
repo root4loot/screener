@@ -7,6 +7,7 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goscope"
+	"github.com/root4loot/goutils/domainutil"
 	"github.com/root4loot/goutils/log"
 )
 
@@ -42,7 +43,6 @@ type Result struct {
 	RequestURL string
 	FinalURL   string
 	Image      []byte
-	Resolver   string
 	Error      error
 }
 
@@ -103,36 +103,42 @@ func NewRunnerWithOptions(options Options) *Runner {
 }
 
 // Single captures a single target and returns the result
-func (r *Runner) Single(target string) (result Result) {
+func (r *Runner) Single(target string) (results []Result) {
+
 	// Normalize target first without locking
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
 		return
 	}
+	// Ensure target has a trailing slash
+	normalizedTarget, _ = domainutil.EnsureTrailingSlash(normalizedTarget)
 
-	// Locking for visited check and adding target to scope
 	r.mutex.Lock()
-	if r.visited[normalizedTarget] {
-		r.mutex.Unlock()
-		return // Target already visited
-	}
-	r.visited[normalizedTarget] = true
-
 	r.Options.Scope.AddTargetToScope(target) // Add target to scope
 	r.mutex.Unlock()
 
 	// Continue with the rest of the function
-	if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
-		if !hasScheme(normalizedTarget) {
-			result := r.worker("http://" + normalizedTarget)
-			if strings.HasPrefix(result.FinalURL, "https://") {
-				return result
+	if !r.isVisited(normalizedTarget) {
+		if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
+			if !hasScheme(normalizedTarget) {
+				log.Debug("Target missing scheme. Trying http://" + normalizedTarget)
+				http_res := r.runWorker("http://" + normalizedTarget)
+				if strings.HasPrefix(http_res.FinalURL, "https://") {
+					log.Debug(target, "redirected to ", http_res.FinalURL)
+				} else if strings.HasPrefix(http_res.FinalURL, "http://") {
+					results = append(results, http_res)
+					log.Debug(target, "did not redirect. Trying https://"+normalizedTarget)
+					https_res := r.runWorker("https://" + normalizedTarget)
+					if strings.HasPrefix(https_res.FinalURL, "https://") {
+						return append(results, https_res)
+					}
+				}
 			} else {
-				return r.worker("https://" + normalizedTarget)
+				results = append(results, r.runWorker(normalizedTarget))
+				r.addVisited(normalizedTarget)
 			}
 		}
-		return r.worker(normalizedTarget)
 	}
 	return
 }
@@ -140,31 +146,6 @@ func (r *Runner) Single(target string) (result Result) {
 // Multiple captures multiple targets and returns the results
 func (r *Runner) Multiple(targets []string) (results []Result) {
 	log.Debug("Running multiple...")
-	resultsChan := make(chan Result)
-
-	inScopeCount := 0
-
-	for _, target := range targets {
-		inScopeCount++
-		go func(t string) {
-			result := r.Single(t)
-			resultsChan <- result
-		}(target)
-	}
-
-	for i := 0; i < inScopeCount; i++ {
-		result := <-resultsChan
-		results = append(results, result)
-	}
-	close(resultsChan)
-
-	return results
-}
-
-// MultipleStream captures multiple targets and streams the results using channels
-func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
-	log.Debug("Running multiple stream...")
-	defer close(results)
 
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
@@ -174,10 +155,43 @@ func (r *Runner) MultipleStream(results chan<- Result, targets ...string) {
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-			results <- r.Single(t)
+			res := r.Single(t)
+			results = append(results, res...)
 		}(target)
 	}
 	wg.Wait()
+
+	return results
+}
+
+// MultipleStream captures multiple targets and streams the results using channels
+func (r *Runner) MultipleStream(resultsChan chan<- Result, targets ...string) {
+	log.Debug("Running multiple stream...")
+	defer close(resultsChan)
+
+	sem := make(chan struct{}, r.Options.Concurrency)
+	var wg sync.WaitGroup
+	for _, target := range targets {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(t string) {
+			defer func() { <-sem }()
+			defer wg.Done()
+			results := r.Single(t)
+			for _, result := range results {
+				resultsChan <- result
+			}
+		}(target)
+	}
+	wg.Wait()
+}
+
+func (r *Runner) runWorker(url string) Result {
+	if !r.isVisited(url) {
+		r.addVisited(url)
+		return r.worker(url)
+	}
+	return Result{}
 }
 
 // getCustomFlags returns custom chromedp.ExecAllocatorOptions based on the Runner's Options.
@@ -210,7 +224,7 @@ func normalize(target string) (string, error) {
 
 	// Add temporary scheme if missing
 	if !hasScheme(target) {
-		target = "x://" + target
+		target = "http://" + target
 	}
 
 	// Parse the target
@@ -240,9 +254,21 @@ func normalize(target string) (string, error) {
 	return target, nil
 }
 
-func // hasScheme checks if the target has a scheme
-hasScheme(target string) bool {
+// hasScheme checks if the target has a scheme
+func hasScheme(target string) bool {
 	return strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://")
+}
+
+func (r *Runner) addVisited(str string) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.visited[str] = true
+}
+
+func (r *Runner) isVisited(str string) bool {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	return r.visited[str]
 }
 
 // SetLogLevel initiates the logger and sets the log level based on the options

@@ -12,6 +12,8 @@ func main() {
 	runner.Options.SaveScreenshots = true
 
 	// Capture a single URL
-	result := runner.Single("https://hackerone.com")
-	fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
+	results := runner.Single("https://hackerone.com")
+	for _, result := range results {
+		fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
+	}
 }

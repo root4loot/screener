@@ -4,9 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -14,20 +17,24 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goutils/log"
-	"golang.org/x/net/html"
 )
+
+func Init() {
+	log.Init("screener")
+	log.SetLevel(log.InfoLevel)
+}
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
-func (r *Runner) worker(rawURL string) Result {
-	log.Debug("Running worker on ", rawURL)
-
-	shouldSave := true // Flag to decide if the screenshot should be saved
+func (r *Runner) worker(requestURL string) Result {
+	log.Debug("Running worker on ", requestURL)
+	var err error
 	var finalURL string
-	var htmlContent string
+	var htmlBody string
+	shouldSave := true // Flag to decide if the screenshot should be saved
 
 	// Initialize the result.
-	result := Result{RequestURL: rawURL}
+	result := Result{RequestURL: requestURL}
 
 	masterContext, chromeContext, cancelMasterContext, cancelChromeContext := r.initializeChromeDPContext()
 	defer cancelMasterContext()
@@ -36,8 +43,8 @@ func (r *Runner) worker(rawURL string) Result {
 	// Add tasks
 	tasks := chromedp.Tasks{
 		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
-		chromedp.Navigate(rawURL),
-		chromedp.OuterHTML("html", &htmlContent),
+		chromedp.Navigate(requestURL),
+		chromedp.OuterHTML("html", &htmlBody),
 		chromedp.CaptureScreenshot(&result.Image),
 	}
 
@@ -49,24 +56,24 @@ func (r *Runner) worker(rawURL string) Result {
 			if ev.Frame.ParentID == "" {
 				finalURL = ev.Frame.URL
 				log.Debugf("Main frame navigated to %s", finalURL)
+				result.FinalURL = finalURL
 
-				if finalURL != rawURL {
-					log.Debugf("Redirect detected from %s to %s", rawURL, finalURL)
-					result.FinalURL = finalURL
-					if !r.Options.FollowRedirects {
-						log.Infof("Cancelling context due to redirect")
+				if !r.Options.FollowRedirects { // If FollowRedirects is disabled, cancel the context
+					log.Infof("Cancelling context due to redirect")
+					cancelChromeContext()
+				} else if finalURL == "chrome-error://chromewebdata/" { // Check for chrome-error://chromewebdata/ and extract the meta refresh URL
+					log.Debugf("chrome-error://chromewebdata/ detected for %s", requestURL)
+
+					htmlBody, _ := fetchURLBody(requestURL)
+					finalURL = extractMetaRefreshURL(htmlBody, requestURL)
+
+					if finalURL != "" && r.Options.FollowRedirects {
+						log.Debugf("Meta refresh detected for %s. Redirecting to %s", requestURL, finalURL)
+						result.FinalURL = finalURL
+
+						// runnning the worker again with the new finalURL
+						_ = r.worker(finalURL)
 						cancelChromeContext()
-					}
-					// update the rawURL to the final URL host
-					u, err := url.Parse(finalURL)
-					if err != nil {
-						log.Warnf("Could not parse final URL: %v", err)
-					} else {
-						// remove the port if it's the default port for the scheme.
-						if u.Scheme == "http" && u.Port() == "80" || u.Scheme == "https" && u.Port() == "443" {
-							u.Host = strings.Split(u.Host, ":")[0]
-						}
-						rawURL = u.Scheme + "://" + u.Host + "/"
 					}
 				}
 			}
@@ -75,6 +82,11 @@ func (r *Runner) worker(rawURL string) Result {
 			// only after all network activity has completed, providing a fully loaded page.
 			if r.Options.WaitForPageLoad {
 				shouldSave = true
+			}
+		case *network.EventResponseReceived: // TODO: add option for this
+			if ev.Response.Status == 400 || ev.Response.Status == 404 {
+				log.Debugf("Ignoring HTTP status %d", ev.Response.Status)
+				cancelChromeContext()
 			}
 		}
 	})
@@ -85,21 +97,14 @@ func (r *Runner) worker(rawURL string) Result {
 	}
 
 	// Run the tasks in the context.
-	err := chromedp.Run(chromeContext, tasks)
+	err = chromedp.Run(chromeContext, tasks)
 	if err != nil {
 		if masterContext.Err() == context.DeadlineExceeded {
-			log.Warnf("Timeout exceeded for %s", rawURL)
+			log.Warnf("Timeout exceeded for %s", requestURL)
 		} else {
 			result.Error = err
 		}
 		return result
-	}
-
-	// Check for meta refresh
-	metaRefreshUrl := extractMetaRefreshURL(htmlContent)
-	if metaRefreshUrl != "" && r.Options.FollowRedirects {
-		log.Debugf("Meta refresh detected for %s. Redirecting to %s", rawURL, metaRefreshUrl)
-		return r.worker(metaRefreshUrl)
 	}
 
 	// If SaveUnique is enabled, check for uniqueness
@@ -108,63 +113,66 @@ func (r *Runner) worker(rawURL string) Result {
 		if err != nil {
 			log.Warnf("Could not perform uniqueness check: %v", err)
 		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", rawURL)
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", requestURL)
 			shouldSave = false
 		}
 	}
 
 	if r.Options.SaveScreenshots && shouldSave {
 		if r.Options.SaveScreenshotsPath == "" {
-			r.Options.SaveScreenshotsPath = DefaultOptions().SaveScreenshotsPath
+			r.Options.SaveScreenshotsPath = DefaultOptions().SaveScreenshotsPath // TODO: on runner init
 		}
 		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
 		if err != nil {
-			log.Warnf("Could not save screenshot for %s: %v", rawURL, err)
+			log.Warnf("Could not save screenshot for %s: %v", requestURL, err)
 		} else {
-			log.Info("Screenshot", rawURL, "saved to", r.Options.SaveScreenshotsPath)
+			log.Info("Screenshot", requestURL, "saved to", r.Options.SaveScreenshotsPath)
 		}
 	}
 
 	return result
 }
 
-func (result Result) WriteToFolder(folderPath string) (filename string, err error) {
-	var u *url.URL
-
+func (result Result) WriteToFolder(writeFolderPath string) (filename string, err error) {
 	// Check if the screenshot data is empty.
 	if len(result.Image) == 0 {
 		return "", nil // Skip saving if data is empty.
 	}
 
 	// Create a folder for screenshots if it doesn't exist.
-	err = os.MkdirAll(folderPath, os.ModePerm)
+	err = os.MkdirAll(writeFolderPath, os.ModePerm)
 	if err != nil {
 		return "", err
 	}
 
-	// Parse the URL to extract the scheme, host, and port.
-	requestURL, err := url.Parse(result.RequestURL)
+	parsedRequestURL, err := url.Parse(result.RequestURL)
 	if err != nil {
 		return "", err
 	}
 
-	// Parse the URL to extract the scheme, host, and port.
-	u, err = url.Parse(result.FinalURL)
+	parsedRedirectURL, err := url.Parse(result.FinalURL)
 	if err != nil {
 		return "", err
 	}
+
+	parsedWriteURL := parsedRequestURL
 
 	// Remove path from the URL unless specified in target.
-	if requestURL.Path == "" {
-		u.Path = ""
+	if parsedRequestURL.Path == "" {
+		parsedWriteURL.Path = ""
+	}
+
+	// Set URL scheme to final URL scheme.
+	if parsedRedirectURL.Scheme != "" {
+		parsedWriteURL.Scheme = parsedRedirectURL.Scheme
 	}
 
 	// remove the port if it's the default port for the scheme.
-	if u.Scheme == "http" || u.Scheme == "https" && u.Port() == "80" || u.Port() == "443" {
-		u.Host = strings.Split(u.Host, ":")[0]
+	if parsedWriteURL.Scheme == "http" || parsedWriteURL.Scheme == "https" && parsedWriteURL.Port() == "80" || parsedWriteURL.Port() == "443" {
+		parsedWriteURL.Host = strings.Split(parsedWriteURL.Host, ":")[0]
 	}
 
-	filename = u.Scheme + "_" + u.Host + u.Path
+	filename = parsedWriteURL.Scheme + "_" + parsedWriteURL.Host + parsedWriteURL.Path
 
 	// Process the path to remove a trailing slash and prepend with an underscore
 	filename = strings.TrimSuffix(filename, "/")
@@ -172,7 +180,7 @@ func (result Result) WriteToFolder(folderPath string) (filename string, err erro
 	filename = strings.ReplaceAll(filename, ":", "-")
 
 	// Create a filename that includes the scheme, host, and port.
-	fileName := filepath.Join(folderPath, filename+".png")
+	fileName := filepath.Join(writeFolderPath, filename+".png")
 
 	// Open the file for writing. Ensure the filename is in lower case.
 	file, err := os.Create(strings.ToLower(fileName))
@@ -212,40 +220,37 @@ func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, 
 }
 
 // extractMetaRefreshURL parses the HTML content and extracts the meta refresh URL, if present.
-func extractMetaRefreshURL(htmlContent string) string {
-	doc, err := html.Parse(strings.NewReader(htmlContent))
+// It resolves relative URLs against the provided baseURL.
+func extractMetaRefreshURL(html, baseURL string) string {
+	// Regex to match the content of URL= in meta refresh tag
+	pattern := `(?i)<meta\s+http-equiv="refresh"\s+content="\d+;\s*url=([^"]+)"`
+	re := regexp.MustCompile(pattern)
+
+	// Find the match
+	matches := re.FindStringSubmatch(html)
+	if len(matches) < 2 {
+		return ""
+	}
+
+	// Extract the URL from the regex match
+	metaURL := matches[1]
+
+	// Parse the base URL
+	baseParsedURL, err := url.Parse(baseURL)
 	if err != nil {
 		// Handle the error as needed
 		return ""
 	}
 
-	var f func(*html.Node) string
-	f = func(n *html.Node) string {
-		if n.Type == html.ElementNode && n.Data == "meta" {
-			for _, a := range n.Attr {
-				if a.Key == "http-equiv" && strings.ToLower(a.Val) == "refresh" {
-					for _, a := range n.Attr {
-						if a.Key == "content" {
-							// Extract URL from content
-							parts := strings.Split(a.Val, "URL=")
-							if len(parts) > 1 {
-								return strings.TrimSpace(parts[1])
-							}
-						}
-					}
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			url := f(c)
-			if url != "" {
-				return url
-			}
-		}
+	// Parse the URL found in the meta tag
+	parsedMetaURL, err := url.Parse(metaURL)
+	if err != nil {
+		// Handle the error as needed
 		return ""
 	}
 
-	return f(doc)
+	// return relative URL against base URL
+	return baseParsedURL.ResolveReference(parsedMetaURL).String()
 }
 
 func checkHashUnique(imageData []byte) (bool, error) {
@@ -263,4 +268,20 @@ func checkHashUnique(imageData []byte) (bool, error) {
 
 	seenHashes[hashStr] = struct{}{}
 	return true, nil
+}
+
+// fetchURLBody makes an HTTP GET request to the specified URL and returns the response body as a string.
+func fetchURLBody(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
 }
