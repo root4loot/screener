@@ -40,6 +40,7 @@ type Options struct {
 }
 
 type Result struct {
+	Target     string
 	RequestURL string
 	FinalURL   string
 	Image      []byte
@@ -123,19 +124,23 @@ func (r *Runner) Single(target string) (results []Result) {
 		if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
 			if !hasScheme(normalizedTarget) {
 				log.Debug("Target missing scheme. Trying http://" + normalizedTarget)
-				http_res := r.runWorker("http://" + normalizedTarget)
-				if strings.HasPrefix(http_res.FinalURL, "https://") {
-					log.Debug(target, "redirected to ", http_res.FinalURL)
-				} else if strings.HasPrefix(http_res.FinalURL, "http://") {
-					results = append(results, http_res)
+				result := r.runWorker("http://" + normalizedTarget)
+				result.Target = target
+				if strings.HasPrefix(result.FinalURL, "https://") {
+					log.Debug(target, "redirected to ", result.FinalURL)
+				} else if strings.HasPrefix(result.FinalURL, "http://") {
+					results = append(results, result)
 					log.Debug(target, "did not redirect. Trying https://"+normalizedTarget)
-					https_res := r.runWorker("https://" + normalizedTarget)
-					if strings.HasPrefix(https_res.FinalURL, "https://") {
-						return append(results, https_res)
+					result := r.runWorker("https://" + normalizedTarget)
+					result.Target = target
+					if strings.HasPrefix(result.FinalURL, "https://") {
+						return append(results, result)
 					}
 				}
 			} else {
-				results = append(results, r.runWorker(normalizedTarget))
+				result := r.runWorker(normalizedTarget)
+				result.Target = target
+				results = append(results, result)
 				r.addVisited(normalizedTarget)
 			}
 		}
