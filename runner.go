@@ -103,49 +103,61 @@ func NewRunnerWithOptions(options Options) *Runner {
 	}
 }
 
-// Single captures a single target and returns the result
+// Single captures a single target and returns the result.
 func (r *Runner) Single(target string) (result Result) {
-	// Normalize target first without locking
+	// Normalize target.
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
-		return
+		return Result{}
 	}
-	// Ensure target has a trailing slash
+
+	// Ensure target has a trailing slash.
 	normalizedTarget, _ = domainutil.EnsureTrailingSlash(normalizedTarget)
 
+	// Add target to scope.
 	r.mutex.Lock()
-	r.Options.Scope.AddTargetToScope(target) // Add target to scope
+	r.Options.Scope.AddTargetToScope(target)
 	r.mutex.Unlock()
 
-	// Continue with the rest of the function
-	if !r.isVisited(normalizedTarget) {
-		if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
-			if !hasScheme(normalizedTarget) {
-				result = r.runWorker("http://" + normalizedTarget)
-				result.Target = target
-				if strings.HasPrefix(result.FinalURL, "https://") {
-					log.Debug(target, "redirected to ", result.FinalURL)
-					return result
-				} else if strings.HasPrefix(result.FinalURL, "http://") {
-					log.Debug(target, "did not redirect. Trying https://"+normalizedTarget)
-					result := r.runWorker("https://" + normalizedTarget)
-					result.Target = target
-					if strings.HasPrefix(result.FinalURL, "https://") {
-						log.Debug(target, "found https://, returning https://", result.FinalURL)
-						return result
-					} else {
-						log.Debug(target, "did not find https://, returning http://", result.FinalURL)
-						return result
-					}
-				}
-			} else {
-				result := r.runWorker(normalizedTarget)
-				result.Target = target
-			}
-		}
+	// Skip if already visited or excluded.
+	if r.isVisited(normalizedTarget) || r.Options.Scope.IsTargetExcluded(normalizedTarget) {
+		return Result{}
 	}
-	return Result{}
+
+	// Process the target based on its scheme.
+	return r.processTarget(target, normalizedTarget)
+}
+
+// processTarget processes the given target based on its scheme.
+func (r *Runner) processTarget(target, normalizedTarget string) (result Result) {
+	if !hasScheme(normalizedTarget) {
+		// Try with http scheme.
+		result = r.tryScheme("http://", target, normalizedTarget)
+		if strings.HasPrefix(result.FinalURL, "https://") {
+			log.Debug(target, "redirected to ", result.FinalURL)
+			return result
+		}
+
+		// Retry with https scheme if http did not redirect to https.
+		log.Debug(target, "did not redirect. Trying https://", normalizedTarget)
+		return r.tryScheme("https://", target, normalizedTarget)
+	}
+
+	// Directly run worker if scheme is present.
+	result = r.runWorker(normalizedTarget)
+	result.Target = target
+	return result
+}
+
+// tryScheme tries to capture the target with the given scheme.
+func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Result) {
+	result = r.runWorker(scheme + normalizedTarget)
+	result.Target = target
+	if strings.HasPrefix(result.FinalURL, scheme) {
+		log.Debug(target, "found ", scheme, ", returning ", result.FinalURL)
+	}
+	return result
 }
 
 // Multiple captures multiple targets and returns the results
