@@ -33,6 +33,7 @@ type Options struct {
 	WaitForPageLoad         bool           // Wait for page to load before capturing
 	WaitTime                int            // Wait time before capturing (seconds)
 	Headless                bool           // Run in headless mode
+	IgnoreStatusCodes       []int64        // List of status codes to ignore
 	// Resolvers               []string       // List of resolvers to use
 	FollowRedirects bool // Follow redirects
 	Silence         bool // Silence output
@@ -69,6 +70,7 @@ func DefaultOptions() *Options {
 		WaitTime:                1,
 		FollowRedirects:         true,
 		Headless:                true,
+		IgnoreStatusCodes:       []int64{},
 	}
 }
 

@@ -34,28 +34,30 @@ Usage: screener [options] (-u <target> | -i <targets.txt>)
 
 
 INPUT:
-   -t,   --target             single target
-   -i,   --infile             file containing targets (one per line)
+   -t,      --target             single target
+   -i,      --infile             file containing targets (one per line)
 
 CONFIGURATIONS:
-   -c,   --concurrency        number of concurrent requests                  (Default: 10)
-   -t,   --timeout            timeout for screenshot capture                 (Default: 15 seconds)
-   -ua,  --user-agent         set user agent                                 (Default: Chrome Headless)
-   -su,  --save-unique        save unique screenshots only                   (Default: false)
-   -dh,  --disable-http2      disable HTTP2                                  (Default: true)
-   -fr,  --follow-redirects   follow redirects                               (Default: true)
-   -hl,  --headless           run in headless mode                           (Default: true)
-   -cw,  --capture-width      screenshot pixel width                         (Default: 1920)
-   -ch,  --capture-height     screenshot pixel height                        (Default: 1080)
-   -wp,  --wait-page          wait for page to fully load before capturing   (Default: true)
-   -wt,  --wait-time          wait time before capturing (seconds)           (Default: 1)
-   -ice, --ignore-cert-err    ignore certificate errors                      (Default: true)
+   -c,   --concurrency           number of concurrent requests                  (Default: 10)
+   -t,   --timeout               timeout for screenshot capture                 (Default: 15 seconds)
+   -ua,  --user-agent            set user agent                                 (Default: Chrome Headless)
+   -su,  --save-unique           save unique screenshots only                   (Default: false)
+   -dh,  --disable-http2         disable HTTP2                                  (Default: true)
+   -fr,  --follow-redirects      follow redirects                               (Default: true)
+   -hl,  --headless              run in headless mode                           (Default: true)
+   -cw,  --capture-width         screenshot pixel width                         (Default: 1920)
+   -ch,  --capture-height        screenshot pixel height                        (Default: 1080)
+   -wp,  --wait-page             wait for page to fully load before capturing   (Default: true)
+   -wt,  --wait-time             wait time before capturing (seconds)           (Default: 1)
+   -ice, --ignore-cert-err       ignore certificate errors                      (Default: true)
+   -isc, --ignore-status-codes   ignore HTTP status codes  (comma separated)    (Default: [])
+   -s,   --silence               silence output                                 (Default: false)
 
 OUTPUT:
-   -o,  --outfolder           save images to given folder     (Default: ./screenshots)
-   -s,  --silence             silence output
-   -v,  --verbose             verbose output
-        --version             display version
+   -o,     --outfolder           save images to given folder     (Default: ./screenshots)
+   -s,     --silence             silence output
+   -v,     --verbose             verbose output
+           --version             display version
 ```
 
 ## Example

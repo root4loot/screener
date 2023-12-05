@@ -21,5 +21,5 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20231114014204-3e458d5176f9
 	github.com/chromedp/chromedp v0.9.3
 	github.com/root4loot/goscope v0.0.0-20231124190357-df9f3447c461
-	github.com/root4loot/goutils v0.0.0-20231130200037-caa6ad205d2c
+	github.com/root4loot/goutils v0.0.0-20231205140918-ec6585800699
 )

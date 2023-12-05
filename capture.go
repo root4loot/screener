@@ -83,10 +83,13 @@ func (r *Runner) worker(requestURL string) Result {
 			if r.Options.WaitForPageLoad {
 				shouldSave = true
 			}
-		case *network.EventResponseReceived: // TODO: add option for this
-			if ev.Response.Status == 400 || ev.Response.Status == 404 {
-				log.Debugf("Ignoring HTTP status %d", ev.Response.Status)
-				cancelChromeContext()
+		case *network.EventResponseReceived:
+			// Ignore HTTP status codes specified in IgnoreStatusCodes
+			for _, code := range r.Options.IgnoreStatusCodes {
+				if ev.Response.Status == code {
+					log.Debugf("Ignoring HTTP status %d", ev.Response.Status)
+					cancelChromeContext()
+				}
 			}
 		}
 	})

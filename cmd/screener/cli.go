@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/root4loot/goutils/log"
@@ -14,11 +15,12 @@ const author = "@danielantonsen"
 
 type CLI struct {
 	*screener.Runner
-	TargetURL string
-	Infile    string
-	Version   bool
-	Help      bool
-	Outfolder string
+	TargetURL         string
+	Infile            string
+	Version           bool
+	Help              bool
+	Outfolder         string
+	IgnoreStatusCodes string
 }
 
 func init() {
@@ -26,9 +28,10 @@ func init() {
 }
 
 func main() {
-	cli := &CLI{screener.NewRunner(), "", "", false, false, ""}
+	cli := &CLI{screener.NewRunner(), "", "", false, false, "", ""}
 	cli.parseFlags()
 	cli.checkForExits()
+	cli.SetCLIOpts()
 
 	runner := cli.Runner
 	runner.Options = cli.Options
@@ -49,6 +52,20 @@ func main() {
 		processResults(runner, targets...)
 	} else if cli.hasTarget() {
 		runner.Single(cli.TargetURL)
+	}
+}
+
+// SetCLIOpts sets the CLI options
+func (cli *CLI) SetCLIOpts() {
+	if cli.IgnoreStatusCodes != "" {
+		codes := strings.Split(cli.IgnoreStatusCodes, ",")
+		for _, code := range codes {
+			intVal, err := strconv.ParseInt(code, 10, 64)
+			if err != nil {
+				log.Fatalf("Invalid status code %s: %v", code, err)
+			}
+			cli.Options.IgnoreStatusCodes = append(cli.Options.IgnoreStatusCodes, intVal)
+		}
 	}
 }
 

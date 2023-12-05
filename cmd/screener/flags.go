@@ -19,8 +19,8 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n\n", os.Args[0])
 
 	fmt.Fprintf(w, "\nINPUT:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-t", "--target", "single target")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t   %s\n", "-i", "--infile", " file containing targets (one per line)")
+	fmt.Fprintf(w, "\t%s,      %s\t\t\t\t %s\n", "-t", "--target", "single target")
+	fmt.Fprintf(w, "\t%s,      %s\t\t\t   %s\n", "-i", "--infile", " file containing targets (one per line)")
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
@@ -35,12 +35,14 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wp", "--wait-page", "wait for page to fully load before capturing", screener.DefaultOptions().WaitForPageLoad)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wt", "--wait-time", "wait time before capturing (seconds)", screener.DefaultOptions().WaitTime)
 	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-ice", "--ignore-cert-err", "ignore certificate errors", screener.DefaultOptions().IgnoreCertificateErrors)
+	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-isc", "--ignore-status-codes", "ignore HTTP status codes  (comma separated)", screener.DefaultOptions().IgnoreStatusCodes)
+	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %v)\n", "-s", "--silence", "silence output", screener.DefaultOptions().Silence)
 
 	fmt.Fprintf(w, "\nOUTPUT:\n")
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t  %s\t  (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t  %s\n", "-s", "--silence", "silence output")
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t  %s\n", "-v", "--verbose", "verbose output")
-	fmt.Fprintf(w, "\t%s   %s\t\t\t  %s\n", "  ", "--version", "display version")
+	fmt.Fprintf(w, "\t%s,     %s\t\t\t  %s\t  (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
+	fmt.Fprintf(w, "\t%s,     %s\t\t\t  %s\n", "-s", "--silence", "silence output")
+	fmt.Fprintf(w, "\t%s,     %s\t\t\t  %s\n", "-v", "--verbose", "verbose output")
+	fmt.Fprintf(w, "\t%s      %s\t\t\t  %s\n", "  ", "--version", "display version")
 
 	w.Flush()
 	fmt.Println("")
@@ -81,6 +83,8 @@ func (c *CLI) parseFlags() {
 	flag.StringVar(&c.Outfolder, "o", screener.DefaultOptions().SaveScreenshotsPath, "")
 	flag.BoolVar(&c.Options.SaveUnique, "save-unique", screener.DefaultOptions().SaveUnique, "")
 	flag.BoolVar(&c.Options.SaveUnique, "su", screener.DefaultOptions().SaveUnique, "")
+	flag.StringVar(&c.IgnoreStatusCodes, "ignore-status-codes", "", "")
+	flag.StringVar(&c.IgnoreStatusCodes, "isc", "", "")
 
 	// OUTPUT
 	flag.BoolVar(&c.Options.Silence, "s", false, "")
