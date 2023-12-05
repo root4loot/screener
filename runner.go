@@ -104,8 +104,7 @@ func NewRunnerWithOptions(options Options) *Runner {
 }
 
 // Single captures a single target and returns the result
-func (r *Runner) Single(target string) (results []Result) {
-
+func (r *Runner) Single(target string) (result Result) {
 	// Normalize target first without locking
 	normalizedTarget, err := normalize(target)
 	if err != nil {
@@ -123,29 +122,30 @@ func (r *Runner) Single(target string) (results []Result) {
 	if !r.isVisited(normalizedTarget) {
 		if !r.Options.Scope.IsTargetExcluded(normalizedTarget) {
 			if !hasScheme(normalizedTarget) {
-				log.Debug("Target missing scheme. Trying http://" + normalizedTarget)
-				result := r.runWorker("http://" + normalizedTarget)
+				result = r.runWorker("http://" + normalizedTarget)
 				result.Target = target
 				if strings.HasPrefix(result.FinalURL, "https://") {
 					log.Debug(target, "redirected to ", result.FinalURL)
+					return result
 				} else if strings.HasPrefix(result.FinalURL, "http://") {
-					results = append(results, result)
 					log.Debug(target, "did not redirect. Trying https://"+normalizedTarget)
 					result := r.runWorker("https://" + normalizedTarget)
 					result.Target = target
 					if strings.HasPrefix(result.FinalURL, "https://") {
-						return append(results, result)
+						log.Debug(target, "found https://, returning https://", result.FinalURL)
+						return result
+					} else {
+						log.Debug(target, "did not find https://, returning http://", result.FinalURL)
+						return result
 					}
 				}
 			} else {
 				result := r.runWorker(normalizedTarget)
 				result.Target = target
-				results = append(results, result)
-				r.addVisited(normalizedTarget)
 			}
 		}
 	}
-	return
+	return Result{}
 }
 
 // Multiple captures multiple targets and returns the results
@@ -160,8 +160,7 @@ func (r *Runner) Multiple(targets []string) (results []Result) {
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-			res := r.Single(t)
-			results = append(results, res...)
+			results = append(results, r.Single(t))
 		}(target)
 	}
 	wg.Wait()
@@ -182,10 +181,7 @@ func (r *Runner) MultipleStream(resultsChan chan<- Result, targets ...string) {
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-			results := r.Single(t)
-			for _, result := range results {
-				resultsChan <- result
-			}
+			resultsChan <- r.Single(t)
 		}(target)
 	}
 	wg.Wait()
