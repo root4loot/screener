@@ -8,8 +8,8 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goscope"
-	"github.com/root4loot/goutils/domainutil"
 	"github.com/root4loot/goutils/log"
+	"github.com/root4loot/goutils/urlutil"
 )
 
 type Runner struct {
@@ -175,7 +175,7 @@ func (r *Runner) capture(target string) Result {
 	}
 
 	// Ensure target has a trailing slash.
-	normalizedTarget, _ = domainutil.EnsureTrailingSlash(normalizedTarget)
+	normalizedTarget, _ = urlutil.EnsureTrailingSlash(normalizedTarget)
 
 	// Add target to scope.
 	r.mutex.Lock()

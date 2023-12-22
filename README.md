@@ -70,27 +70,27 @@ Capture a screenshot from a single URL. If the URL scheme (http/https) is not sp
 ```sh
 ✗ screener -t "example.com"
 # Captures both http://example.com/ and https://example.com/
-[screener] (INFO) Screenshot http://example.com/ saved to  ./screenshots                         
-[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots
+[screener] (RES) Screenshot http://example.com/ saved to  ./screenshots                         
+[screener] (RES) Screenshot https://example.com/ saved to ./screenshots
 
 ✗ screener -t "google.com"
-# Captures https://www.google.com (redirects from http to https)
-[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots 
+# Captures https://www.google.com only due to redirect
+[screener] (RES) Screenshot https://www.google.com saved to ./screenshots 
 ```
 
 ### Screenshotting URLs from a File
 Capture screenshots from multiple URLs listed in a file but wait for pages to load first and only save unique images.
 
 ```sh
-✗ screener -i urls.txt --wait-page --save-unique 
-[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                         
-[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots                         
-[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots                         
-[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots                   
-[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots                      
-[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots                    
-[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots                   
-[screener] (INFO) Screenshot https://www.bugcrowd.com saved to ./screenshots 
+✗ screener -i urls.txt --save-unique 
+[screener] (RES) Screenshot http://example.com/ saved to ./screenshots                         
+[screener] (RES) Screenshot https://example.com/ saved to ./screenshots                         
+[screener] (RES) Screenshot https://github.com/ saved to ./screenshots                         
+[screener] (RES) Screenshot https://consent.yahoo.com saved to ./screenshots                   
+[screener] (RES) Screenshot https://www.google.com saved to ./screenshots                      
+[screener] (RES) Screenshot https://www.facebook.com saved to ./screenshots                    
+[screener] (RES) Screenshot https://www.hackerone.com saved to ./screenshots                   
+[screener] (RES) Screenshot https://www.bugcrowd.com saved to ./screenshots 
 ```
 
 ## Piping URLs from SDIN
@@ -98,14 +98,14 @@ Stream URLs to Screener, capturing screenshots as they are received:
 
 ```sh
 ✗ cat urls.txt | screener                        
-[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots
-[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots
-[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots
-[screener] (INFO) Screenshot https://www.bugcrowd.com saved to ./screenshots
-[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots
-[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots
-[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots
-[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots
+[screener] (RES) Screenshot http://example.com/ saved to ./screenshots
+[screener] (RES) Screenshot https://example.com/ saved to ./screenshots
+[screener] (RES) Screenshot https://www.hackerone.com saved to ./screenshots
+[screener] (RES) Screenshot https://www.bugcrowd.com saved to ./screenshots
+[screener] (RES) Screenshot https://www.google.com saved to ./screenshots
+[screener] (RES) Screenshot https://www.facebook.com saved to ./screenshots
+[screener] (RES) Screenshot https://consent.yahoo.com saved to ./screenshots
+[screener] (RES) Screenshot https://github.com/ saved to ./screenshots
 ```
 
 

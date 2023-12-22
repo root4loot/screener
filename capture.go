@@ -162,7 +162,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			return err
 		}
-		log.Infof("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
+		log.Resultf("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
 	}
 	return nil
 }
