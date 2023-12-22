@@ -1,19 +1,26 @@
 package screener
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/fogleman/gg"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/root4loot/goutils/log"
+	"golang.org/x/image/font/inconsolata"
 )
 
 func Init() {
@@ -75,6 +82,9 @@ func (r *Runner) worker(requestURL string) Result {
 		}
 	}
 
+	// Update final URL and return result
+	result.FinalURL = page.MustInfo().URL
+
 	// Take and process screenshot
 	if err := processScreenshot(page, &result, r); err != nil {
 		log.Warnf("Error processing screenshot for %s: %v", requestURL, err)
@@ -82,10 +92,47 @@ func (r *Runner) worker(requestURL string) Result {
 		return result
 	}
 
-	// Update final URL and return result
-	result.FinalURL = page.MustInfo().URL
-
 	return result
+}
+
+// processScreenshot handles taking, saving, and uniqueness checking of screenshots.
+func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
+	shouldSave := true
+	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
+	if err != nil {
+		return err
+	}
+	result.Image = screenshot
+
+	// Add text to image if required
+	if !r.Options.URLInImage {
+		result.Image, err = r.addTextToImage(result.Image, result.FinalURL)
+		if err != nil {
+			log.Warnf("Error adding text to image for %s: %v", result.FinalURL, err)
+			result.Error = err
+		}
+	}
+
+	// Check for screenshot uniqueness if required
+	if r.Options.SaveUnique {
+		unique, err := checkHashUnique(result.Image)
+		if err != nil {
+			log.Warnf("Could not perform uniqueness check: %v", err)
+		} else if !unique {
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.RequestURL)
+			shouldSave = false
+		}
+	}
+
+	// Save screenshot if required
+	if r.Options.SaveScreenshots && shouldSave {
+		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
+		if err != nil {
+			return err
+		}
+		log.Resultf("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
+	}
+	return nil
 }
 
 func (result Result) WriteToFolder(writeFolderPath string) (filename string, err error) {
@@ -153,37 +200,6 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 	return fileName, nil
 }
 
-// processScreenshot handles taking, saving, and uniqueness checking of screenshots.
-func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
-	shouldSave := true
-	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
-	if err != nil {
-		return err
-	}
-	result.Image = screenshot
-
-	// Check for screenshot uniqueness if required
-	if r.Options.SaveUnique {
-		unique, err := checkHashUnique(result.Image)
-		if err != nil {
-			log.Warnf("Could not perform uniqueness check: %v", err)
-		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.RequestURL)
-			shouldSave = false
-		}
-	}
-
-	// Save screenshot if required
-	if r.Options.SaveScreenshots && shouldSave {
-		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
-		if err != nil {
-			return err
-		}
-		log.Resultf("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
-	}
-	return nil
-}
-
 // newLauncher creates a new browser launcher with the specified options.
 func newLauncher(options Options) *launcher.Launcher {
 	l := launcher.New().
@@ -220,4 +236,48 @@ func checkHashUnique(imageData []byte) (bool, error) {
 
 	seenHashes[hashStr] = struct{}{}
 	return true, nil
+}
+
+// addTextToImage adds text to the bottom of the image with padding and border.
+func (r *Runner) addTextToImage(imgBytes []byte, text string) ([]byte, error) {
+	img, _, err := image.Decode(bytes.NewReader(imgBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Constants for drawing the text box.
+	const padding = 20
+	const borderSize = 1
+
+	// Calculate new image height with text box.
+	w := img.Bounds().Dx()
+	h := img.Bounds().Dy() + padding*2 + borderSize
+	dc := gg.NewContext(w, h)
+
+	// Draw the original image.
+	dc.DrawImage(img, 0, 0)
+
+	// Draw the border line and background for text.
+	yLine := float64(img.Bounds().Dy())
+	dc.SetColor(color.Black)
+	dc.DrawLine(0, yLine, float64(w), yLine)
+	dc.SetLineWidth(float64(borderSize))
+	dc.Stroke()
+	dc.SetColor(color.White)
+	dc.DrawRectangle(0, yLine, float64(w), float64(padding*2))
+	dc.Fill()
+
+	// Set up text properties and draw text.
+	dc.SetColor(color.Black) // Use black for the text color.
+
+	dc.SetFontFace(inconsolata.Regular8x16)
+	dc.DrawStringAnchored(text, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
+
+	// Encode the context to a new image.
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, dc.Image()); err != nil {
+		return nil, fmt.Errorf("failed to encode image: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }

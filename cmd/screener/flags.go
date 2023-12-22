@@ -40,10 +40,11 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %v)\n", "-s", "--silence", "silence output", screener.DefaultOptions().Silence)
 
 	fmt.Fprintf(w, "\nOUTPUT:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\t  (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-s", "--silence", "silence output")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-v", "--verbose", "verbose output")
-	fmt.Fprintf(w, "\t%s    %s\t\t\t\t   %s\n", "  ", "--version", "display version")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\t\t\t\t\t     (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
+	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t %s\t\t\t\t\t     (Default: %v)\n", "-wu", "--without-url", "without URL in image", !screener.DefaultOptions().URLInImage)
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-s", "--silence", "silence output")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-v", "--verbose", "verbose output")
+	fmt.Fprintf(w, "\t%s    %s\t\t\t\t %s\n", "  ", "--version", "display version")
 
 	w.Flush()
 	fmt.Println("")
@@ -90,6 +91,8 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Options.CaptureFull, "cf", screener.DefaultOptions().CaptureFull, "")
 
 	// OUTPUT
+	flag.BoolVar(&c.Options.URLInImage, "without-url", !screener.DefaultOptions().URLInImage, "")
+	flag.BoolVar(&c.Options.URLInImage, "wu", !screener.DefaultOptions().URLInImage, "")
 	flag.BoolVar(&c.Options.Silence, "s", false, "")
 	flag.BoolVar(&c.Options.Silence, "silence", false, "")
 	flag.BoolVar(&c.Options.Verbose, "v", false, "")

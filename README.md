@@ -14,6 +14,8 @@ screener is a command-line interface (CLI) and Golang library for capturing scre
 - **Certificate Error Handling**: Includes an option to ignore SSL certificate errors, useful for testing environments.
 - **HTTP/2 Control**: Allows disabling HTTP/2, offering compatibility with different server configurations.
 - **Custom User-Agent**: Enables setting a custom user-agent for requests, allowing simulation of different browsers or devices.
+- **URL in Image**: Optionally includes the URL in the captured image, providing context and reference directly in the screenshot.
+
 
 ## Installation
 
@@ -57,7 +59,8 @@ CONFIGURATIONS:
    -s,   --silence                 silence output                                 (Default: false)
 
 OUTPUT:
-   -o,   --outfolder               save images to given folder     (Default: ./screenshots)
+   -o,   --outfolder               save images to given folder                    (Default: ./screenshots)
+   -wu,  --without-url             without URL in image                           (Default: false)
    -s,   --silence                 silence output
    -v,   --verbose                 verbose output
          --version                 display version
