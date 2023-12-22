@@ -19,12 +19,12 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n", os.Args[0])
 
 	fmt.Fprintf(w, "\nINPUT:\n")
-	fmt.Fprintf(w, "\t%s,      %s\t\t\t\t   %s\n", "-t", "--target", "single target")
-	fmt.Fprintf(w, "\t%s,      %s\t\t\t     %s\n", "-i", "--infile", " file containing targets (one per line)")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t     %s\n", "-t", "--target", "single target")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t       %s\n", "-i", "--infile", " file containing targets (one per line)")
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d seconds)\n", "-t", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
+	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
+	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d seconds)\n", "-t", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %s)\n", "-ua", "--user-agent", "set user agent", "Chrome Headless")
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-su", "--save-unique", "save unique screenshots only", screener.DefaultOptions().SaveUnique)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dh", "--disable-http2", "disable HTTP2", screener.DefaultOptions().DisableHTTP2)
@@ -39,10 +39,10 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %v)\n", "-s", "--silence", "silence output", screener.DefaultOptions().Silence)
 
 	fmt.Fprintf(w, "\nOUTPUT:\n")
-	fmt.Fprintf(w, "\t%s,       %s\t\t\t  %s\t  (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,       %s\t\t\t  %s\n", "-s", "--silence", "silence output")
-	fmt.Fprintf(w, "\t%s,       %s\t\t\t  %s\n", "-v", "--verbose", "verbose output")
-	fmt.Fprintf(w, "\t%s        %s\t\t\t  %s\n", "  ", "--version", "display version")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\t  (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-s", "--silence", "silence output")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-v", "--verbose", "verbose output")
+	fmt.Fprintf(w, "\t%s    %s\t\t\t\t   %s\n", "  ", "--version", "display version")
 
 	w.Flush()
 	fmt.Println("")
