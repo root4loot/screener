@@ -31,8 +31,7 @@ type Options struct {
 	Scope                   *goscope.Scope // Scope to use
 	UserAgent               string         // User agent to use
 	WaitForPageLoad         bool           // Wait for page to load before capturing
-	WaitTime                int            // Wait time before capturing (seconds)
-	Headless                bool           // Run in headless mode
+	WaitTime                int            // Max wait time in seconds before taking screenshot, regardless of page load completion
 	IgnoreStatusCodes       []int64        // List of status codes to ignore
 	// Resolvers               []string       // List of resolvers to use
 	FollowRedirects bool // Follow redirects
@@ -67,9 +66,8 @@ func DefaultOptions() *Options {
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
 		WaitForPageLoad:         true,
-		WaitTime:                1,
+		WaitTime:                30,
 		FollowRedirects:         true,
-		Headless:                true,
 		IgnoreStatusCodes:       []int64{},
 	}
 }
@@ -214,11 +212,6 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	// log.Debug("Getting custom flags...")
 
 	var customFlags []chromedp.ExecAllocatorOption
-
-	// Headless mode
-	if r.Options.Headless {
-		customFlags = append(customFlags, chromedp.Flag("headless", true))
-	}
 
 	// Add custom flags based on the Runner's Options.
 	if r.Options.IgnoreCertificateErrors {

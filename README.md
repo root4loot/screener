@@ -2,15 +2,18 @@
 <img src="./assets/logo.png" alt="screener logo" width="300"/>
 </p>
 
-screener is a command-line interface (CLI) and Golang library for capturing screenshots of web pages. Built on top of [chromedp](https://github.com/chromedp/chromedp), it utilizes a headless browser for screenshot rendering.
+screener is a command-line interface (CLI) and Golang library for capturing screenshots of web pages. Built on top of [Rod](https://github.com/go-rod/rod).
 
 ## Features
 
 - **Stream URLs for Screenshotting**: Accepts URLs via standard input (STDIN) and processes them in real-time.
-- **Wait for Page to Load**: Allows waiting for the complete rendering of the web page body for more accurate screenshots. This avoids capturing loading icons.
-- **Redirect Handling**: Customizable option for following or ignoring redirects.
-- **Unique Screenshots**: Provides the option to save only unique screenshots.
-- **Concurrency Support**: Enables fast processing through concurrent requests.
+- **Max Wait for Page Load**: Waits for a specified maximum time for the web page to load before capturing the screenshot, ensuring the capture of the most relevant content.
+- **Redirect Handling**: Customizable option for following or ignoring redirects, providing control over how URL changes are managed.
+- **Unique Screenshots**: Offers an option to save only unique screenshots, avoiding duplication.
+- **Concurrency Support**: Facilitates fast processing with concurrent requests.
+- **Certificate Error Handling**: Includes an option to ignore SSL certificate errors, useful for testing environments.
+- **HTTP/2 Control**: Allows disabling HTTP/2, offering compatibility with different server configurations.
+- **Custom User-Agent**: Enables setting a custom user-agent for requests, allowing simulation of different browsers or devices.
 
 ## Installation
 
@@ -32,7 +35,6 @@ docker run -it screener -h
 ```
 Usage: screener [options] (-u <target> | -i <targets.txt>)
 
-
 INPUT:
    -t,      --target             single target
    -i,      --infile             file containing targets (one per line)
@@ -44,11 +46,10 @@ CONFIGURATIONS:
    -su,  --save-unique           save unique screenshots only                   (Default: false)
    -dh,  --disable-http2         disable HTTP2                                  (Default: true)
    -fr,  --follow-redirects      follow redirects                               (Default: true)
-   -hl,  --headless              run in headless mode                           (Default: true)
    -cw,  --capture-width         screenshot pixel width                         (Default: 1920)
    -ch,  --capture-height        screenshot pixel height                        (Default: 1080)
    -wp,  --wait-page             wait for page to fully load before capturing   (Default: true)
-   -wt,  --wait-time             wait time before capturing (seconds)           (Default: 1)
+   -wt,  --wait-time             wait time before capturing (seconds)           (Default: 30)
    -ice, --ignore-cert-err       ignore certificate errors                      (Default: true)
    -isc, --ignore-status-codes   ignore HTTP status codes  (comma separated)    (Default: [])
    -s,   --silence               silence output                                 (Default: false)

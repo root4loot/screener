@@ -4,18 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
-	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/chromedp"
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
 	"github.com/root4loot/goutils/log"
 )
 
@@ -27,112 +23,51 @@ func Init() {
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
 func (r *Runner) worker(requestURL string) Result {
-	log.Debug("Running worker on ", requestURL)
-	var err error
-	var finalURL string
-	var htmlBody string
-	shouldSave := true // Flag to decide if the screenshot should be saved
-
-	// Initialize the result.
+	log.Info("Running worker on", requestURL)
 	result := Result{RequestURL: requestURL}
 
-	masterContext, chromeContext, cancelMasterContext, cancelChromeContext := r.initializeChromeDPContext()
-	defer cancelMasterContext()
-	defer cancelChromeContext()
+	// Launch browser with configured options
+	l := newLauncher(*r.Options)
+	browserURL := l.MustLaunch()
+	browser := rod.New().ControlURL(browserURL).MustConnect()
+	defer browser.MustClose()
 
-	// Add tasks
-	tasks := chromedp.Tasks{
-		chromedp.EmulateViewport(int64(r.Options.CaptureWidth), int64(r.Options.CaptureHeight)),
-		chromedp.Navigate(requestURL),
-		chromedp.OuterHTML("html", &htmlBody),
-		chromedp.CaptureScreenshot(&result.Image),
-	}
-
-	// All chromedp.ListenTarget calls
-	chromedp.ListenTarget(chromeContext, func(ev interface{}) {
-		switch ev := ev.(type) {
-		case *page.EventFrameNavigated:
-			// Handling EventFrameNavigated
-			if ev.Frame.ParentID == "" {
-				finalURL = ev.Frame.URL
-				log.Debugf("Main frame navigated to %s", finalURL)
-				result.FinalURL = finalURL
-
-				if !r.Options.FollowRedirects { // If FollowRedirects is disabled, cancel the context
-					log.Infof("Cancelling context due to redirect")
-					cancelChromeContext()
-				} else if finalURL == "chrome-error://chromewebdata/" { // Check for chrome-error://chromewebdata/ and extract the meta refresh URL
-					log.Debugf("chrome-error://chromewebdata/ detected for %s", requestURL)
-
-					htmlBody, _ := fetchURLBody(requestURL)
-					finalURL = extractMetaRefreshURL(htmlBody, requestURL)
-
-					if finalURL != "" && r.Options.FollowRedirects {
-						log.Debugf("Meta refresh detected for %s. Redirecting to %s", requestURL, finalURL)
-						result.FinalURL = finalURL
-
-						// runnning the worker again with the new finalURL
-						_ = r.worker(finalURL)
-						cancelChromeContext()
-					}
-				}
-			}
-		case *network.EventLoadingFinished:
-			// WaitForPageLoad, when enabled, ensures that the screenshot is taken
-			// only after all network activity has completed, providing a fully loaded page.
-			if r.Options.WaitForPageLoad {
-				shouldSave = true
-			}
-		case *network.EventResponseReceived:
-			// Ignore HTTP status codes specified in IgnoreStatusCodes
-			for _, code := range r.Options.IgnoreStatusCodes {
-				if ev.Response.Status == code {
-					log.Debugf("Ignoring HTTP status %d", ev.Response.Status)
-					cancelChromeContext()
-				}
-			}
-		}
-	})
-
-	// Wait for the specified time before capturing the screenshot
-	if r.Options.WaitTime > 0 {
-		time.Sleep(time.Duration(r.Options.WaitTime) * time.Second)
-	}
-
-	// Run the tasks in the context.
-	err = chromedp.Run(chromeContext, tasks)
-	if err != nil {
-		if masterContext.Err() == context.DeadlineExceeded {
-			log.Warnf("Timeout exceeded for %s", requestURL)
-		} else {
-			result.Error = err
-		}
+	// Navigate to the URL
+	page := browser.MustPage("")
+	if err := page.Navigate(requestURL); err != nil {
+		log.Warnf("Error navigating to %s: %v", requestURL, err)
+		result.Error = err
 		return result
 	}
 
-	// If SaveUnique is enabled, check for uniqueness
-	if r.Options.SaveUnique {
-		unique, err := checkHashUnique(result.Image)
+	// Handle redirects
+	if !r.Options.FollowRedirects && page.MustInfo().URL != requestURL {
+		log.Warn("Redirect detected, but FollowRedirects is disabled")
+		return result
+	}
+
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.WaitTime)*time.Second)
+	defer cancel()
+
+	// Wait for the page to load with a timeout
+	if r.Options.WaitForPageLoad {
+		err := page.Context(ctx).WaitLoad()
 		if err != nil {
-			log.Warnf("Could not perform uniqueness check: %v", err)
-		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", requestURL)
-			shouldSave = false
+			log.Warnf("Wait for page load timed out after %v: %v", time.Duration(r.Options.WaitTime)*time.Second, err)
+			log.Warn("Proceeding to take a screenshot anyway.")
 		}
 	}
 
-	if r.Options.SaveScreenshots && shouldSave {
-		if r.Options.SaveScreenshotsPath == "" {
-			r.Options.SaveScreenshotsPath = DefaultOptions().SaveScreenshotsPath // TODO: on runner init
-		}
-		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
-		if err != nil {
-			log.Warnf("Could not save screenshot for %s: %v", requestURL, err)
-		} else {
-			log.Info("Screenshot", requestURL, "saved to", r.Options.SaveScreenshotsPath)
-		}
+	// Take and process screenshot
+	if err := processScreenshot(page, &result, r); err != nil {
+		log.Warnf("Error processing screenshot for %s: %v", requestURL, err)
+		result.Error = err
+		return result
 	}
 
+	// Update final URL and return result
+	result.FinalURL = page.MustInfo().URL
 	return result
 }
 
@@ -171,7 +106,7 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 	}
 
 	// remove the port if it's the default port for the scheme.
-	if parsedWriteURL.Scheme == "http" || parsedWriteURL.Scheme == "https" && parsedWriteURL.Port() == "80" || parsedWriteURL.Port() == "443" {
+	if (parsedWriteURL.Scheme == "http" || parsedWriteURL.Scheme == "https") && parsedWriteURL.Port() == "80" || parsedWriteURL.Port() == "443" {
 		parsedWriteURL.Host = strings.Split(parsedWriteURL.Host, ":")[0]
 	}
 
@@ -201,61 +136,58 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 	return fileName, nil
 }
 
-func (r *Runner) initializeChromeDPContext() (context.Context, context.Context, context.CancelFunc, context.CancelFunc) {
-	// Create a master context for the whole operation.
-	masterContext, cancelMasterContext := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
+// processScreenshot handles taking, saving, and uniqueness checking of screenshots.
+func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
+	shouldSave := true
+	screenshot, err := page.Screenshot(true, nil)
+	if err != nil {
+		return err
+	}
+	result.Image = screenshot
 
-	// Create custom chromedp options by appending the custom flags to the default options.
-	opts := append(chromedp.DefaultExecAllocatorOptions[:], r.GetCustomFlags()...)
-
-	// Set custom user-agent if provided in the options.
-	if r.Options.UserAgent != "" {
-		opts = append(opts, chromedp.UserAgent(r.Options.UserAgent))
+	// Check for screenshot uniqueness if required
+	if r.Options.SaveUnique {
+		unique, err := checkHashUnique(result.Image)
+		if err != nil {
+			log.Warnf("Could not perform uniqueness check: %v", err)
+		} else if !unique {
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.RequestURL)
+			shouldSave = false
+		}
 	}
 
-	// Create an ExecAllocator with the custom options.
-	allocator, _ := chromedp.NewExecAllocator(masterContext, opts...)
-
-	// Create a context with the custom allocator.
-	chromeContext, cancelChromeContext := chromedp.NewContext(allocator)
-
-	return masterContext, chromeContext, cancelMasterContext, cancelChromeContext
+	// Save screenshot if required
+	if r.Options.SaveScreenshots && shouldSave {
+		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
+		if err != nil {
+			return err
+		}
+		log.Infof("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
+	}
+	return nil
 }
 
-// extractMetaRefreshURL parses the HTML content and extracts the meta refresh URL, if present.
-// It resolves relative URLs against the provided baseURL.
-func extractMetaRefreshURL(html, baseURL string) string {
-	// Regex to match the content of URL= in meta refresh tag
-	pattern := `(?i)<meta\s+http-equiv="refresh"\s+content="\d+;\s*url=([^"]+)"`
-	re := regexp.MustCompile(pattern)
+// newLauncher creates a new browser launcher with the specified options.
+func newLauncher(options Options) *launcher.Launcher {
+	l := launcher.New().
+		Headless(true) // Set to true to ensure headless mode
 
-	// Find the match
-	matches := re.FindStringSubmatch(html)
-	if len(matches) < 2 {
-		return ""
+	if options.UserAgent != "" {
+		l.Set("user-agent", options.UserAgent)
 	}
 
-	// Extract the URL from the regex match
-	metaURL := matches[1]
-
-	// Parse the base URL
-	baseParsedURL, err := url.Parse(baseURL)
-	if err != nil {
-		// Handle the error as needed
-		return ""
+	if options.IgnoreCertificateErrors {
+		l.Set("ignore-certificate-errors", "true")
 	}
 
-	// Parse the URL found in the meta tag
-	parsedMetaURL, err := url.Parse(metaURL)
-	if err != nil {
-		// Handle the error as needed
-		return ""
+	if options.DisableHTTP2 {
+		l.Set("disable-http2", "true")
 	}
 
-	// return relative URL against base URL
-	return baseParsedURL.ResolveReference(parsedMetaURL).String()
+	return l
 }
 
+// checkHashUnique checks if the hash of the screenshot data is unique.
 func checkHashUnique(imageData []byte) (bool, error) {
 	hasher := sha256.New()
 	_, err := hasher.Write(imageData)
@@ -271,20 +203,4 @@ func checkHashUnique(imageData []byte) (bool, error) {
 
 	seenHashes[hashStr] = struct{}{}
 	return true, nil
-}
-
-// fetchURLBody makes an HTTP GET request to the specified URL and returns the response body as a string.
-func fetchURLBody(url string) (string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
 }

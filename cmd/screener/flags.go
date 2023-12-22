@@ -16,7 +16,7 @@ func (c *CLI) banner() {
 func (c *CLI) usage() {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
 
-	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n\n", os.Args[0])
+	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n", os.Args[0])
 
 	fmt.Fprintf(w, "\nINPUT:\n")
 	fmt.Fprintf(w, "\t%s,      %s\t\t\t\t %s\n", "-t", "--target", "single target")
@@ -29,7 +29,6 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-su", "--save-unique", "save unique screenshots only", screener.DefaultOptions().SaveUnique)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dh", "--disable-http2", "disable HTTP2", screener.DefaultOptions().DisableHTTP2)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-fr", "--follow-redirects", "follow redirects", screener.DefaultOptions().FollowRedirects)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-hl", "--headless", "run in headless mode", screener.DefaultOptions().Headless)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-cw", "--capture-width", "screenshot pixel width", screener.DefaultOptions().CaptureWidth)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-ch", "--capture-height", "screenshot pixel height", screener.DefaultOptions().CaptureHeight)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wp", "--wait-page", "wait for page to fully load before capturing", screener.DefaultOptions().WaitForPageLoad)
@@ -67,8 +66,6 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Options.DisableHTTP2, "dh", screener.DefaultOptions().DisableHTTP2, "")
 	flag.BoolVar(&c.Options.FollowRedirects, "follow-redirects", screener.DefaultOptions().FollowRedirects, "")
 	flag.BoolVar(&c.Options.FollowRedirects, "fr", screener.DefaultOptions().FollowRedirects, "")
-	flag.BoolVar(&c.Options.Headless, "headless", screener.DefaultOptions().Headless, "")
-	flag.BoolVar(&c.Options.Headless, "hl", screener.DefaultOptions().Headless, "")
 	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ignore-cert-err", screener.DefaultOptions().IgnoreCertificateErrors, "")
 	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ice", screener.DefaultOptions().IgnoreCertificateErrors, "")
 	flag.BoolVar(&c.Options.WaitForPageLoad, "wait-page", screener.DefaultOptions().WaitForPageLoad, "")
