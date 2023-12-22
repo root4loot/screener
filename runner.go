@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"github.com/root4loot/goscope"
@@ -33,10 +34,10 @@ type Options struct {
 	WaitForPageLoad         bool           // Wait for page to load before capturing
 	WaitTime                int            // Max wait time in seconds before taking screenshot, regardless of page load completion
 	IgnoreStatusCodes       []int64        // List of status codes to ignore
-	// Resolvers               []string       // List of resolvers to use
-	FollowRedirects bool // Follow redirects
-	Silence         bool // Silence output
-	Verbose         bool // Verbose logging
+	DelayBetweenCapture     int            // Delay in seconds between captures for multiple targets
+	FollowRedirects         bool           // Follow redirects
+	Silence                 bool           // Silence output
+	Verbose                 bool           // Verbose logging
 }
 
 type Result struct {
@@ -67,6 +68,7 @@ func DefaultOptions() *Options {
 		SaveScreenshotsPath:     "./screenshots",
 		WaitForPageLoad:         true,
 		WaitTime:                30,
+		DelayBetweenCapture:     0,
 		FollowRedirects:         true,
 		IgnoreStatusCodes:       []int64{},
 	}
@@ -146,6 +148,7 @@ func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
 	wg.Wait()
 }
 
+// runWorker runs a worker on the given URL.
 func (r *Runner) runWorker(url string) Result {
 	if !r.isVisited(url) {
 		r.addVisited(url)
@@ -156,6 +159,12 @@ func (r *Runner) runWorker(url string) Result {
 
 // capture encapsulates the logic to capture a single target.
 func (r *Runner) capture(target string) Result {
+
+	// Add delay between captures if specified
+	if r.Options.DelayBetweenCapture > 0 {
+		time.Sleep(time.Duration(r.Options.DelayBetweenCapture) * time.Second)
+	}
+
 	log.Debugf("Capturing target: %s", target)
 
 	// Normalize target.
