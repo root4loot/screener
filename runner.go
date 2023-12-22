@@ -103,13 +103,66 @@ func NewRunnerWithOptions(options Options) *Runner {
 	}
 }
 
-// Single captures a single target and returns the result.
-func (r *Runner) Single(target string) (result Result) {
+// Run captures one or more targets and returns the results. It handles both single and multiple targets.
+func (r *Runner) Run(targets ...string) (results []Result) {
+	if len(targets) == 1 {
+		// Handle single target
+		return []Result{r.capture(targets[0])}
+	}
+
+	// Handle multiple targets
+	sem := make(chan struct{}, r.Options.Concurrency)
+	var wg sync.WaitGroup
+	for _, target := range targets {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(t string) {
+			defer func() { <-sem }()
+			defer wg.Done()
+			results = append(results, r.capture(t))
+		}(target)
+	}
+	wg.Wait()
+
+	return results
+}
+
+// RunAsync captures multiple targets asynchronously and streams the results using channels.
+func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
+	log.Debug("Running async capture...")
+	defer close(resultsChan)
+
+	sem := make(chan struct{}, r.Options.Concurrency)
+	var wg sync.WaitGroup
+	for _, target := range targets {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(t string) {
+			defer func() { <-sem }()
+			defer wg.Done()
+			resultsChan <- r.capture(t)
+		}(target)
+	}
+	wg.Wait()
+}
+
+func (r *Runner) runWorker(url string) Result {
+	if !r.isVisited(url) {
+		r.addVisited(url)
+		return r.worker(url)
+	}
+	return Result{}
+}
+
+// capture encapsulates the logic to capture a single target.
+func (r *Runner) capture(target string) Result {
+	log.Debugf("Capturing target: %s", target)
+
 	// Normalize target.
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
-		return Result{}
+		return Result{Error: err}
 	}
 
 	// Ensure target has a trailing slash.
@@ -122,6 +175,7 @@ func (r *Runner) Single(target string) (result Result) {
 
 	// Skip if already visited or excluded.
 	if r.isVisited(normalizedTarget) || r.Options.Scope.IsTargetExcluded(normalizedTarget) {
+		log.Debugf("Target skipped (already visited or excluded): %s", normalizedTarget)
 		return Result{}
 	}
 
@@ -158,53 +212,6 @@ func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Resu
 		log.Debug(target, "found ", scheme, ", returning ", result.FinalURL)
 	}
 	return result
-}
-
-// Multiple captures multiple targets and returns the results
-func (r *Runner) Multiple(targets []string) (results []Result) {
-	log.Debug("Running multiple...")
-
-	sem := make(chan struct{}, r.Options.Concurrency)
-	var wg sync.WaitGroup
-	for _, target := range targets {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(t string) {
-			defer func() { <-sem }()
-			defer wg.Done()
-			results = append(results, r.Single(t))
-		}(target)
-	}
-	wg.Wait()
-
-	return results
-}
-
-// MultipleStream captures multiple targets and streams the results using channels
-func (r *Runner) MultipleStream(resultsChan chan<- Result, targets ...string) {
-	log.Debug("Running multiple stream...")
-	defer close(resultsChan)
-
-	sem := make(chan struct{}, r.Options.Concurrency)
-	var wg sync.WaitGroup
-	for _, target := range targets {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(t string) {
-			defer func() { <-sem }()
-			defer wg.Done()
-			resultsChan <- r.Single(t)
-		}(target)
-	}
-	wg.Wait()
-}
-
-func (r *Runner) runWorker(url string) Result {
-	if !r.isVisited(url) {
-		r.addVisited(url)
-		return r.worker(url)
-	}
-	return Result{}
 }
 
 // getCustomFlags returns custom chromedp.ExecAllocatorOptions based on the Runner's Options.

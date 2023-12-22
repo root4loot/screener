@@ -32,8 +32,8 @@ func main() {
 		IgnoreCertificateErrors: true,
 		Verbose:                 false,
 		Silence:                 true,
-		CaptureWidth:            1920,
-		CaptureHeight:           1080,
+		CaptureWidth:            1366,
+		CaptureHeight:           768,
 	}
 
 	// Create a screener runner with options
@@ -43,7 +43,7 @@ func main() {
 	results := make(chan screener.Result)
 
 	// Start capturing URLs using multiple goroutines
-	go runner.MultipleStream(results, urls...)
+	go runner.RunAsync(results, urls...)
 
 	// Process the results as they come in
 	for result := range results {

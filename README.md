@@ -69,7 +69,7 @@ Capture a screenshot from a single URL. If the URL scheme (http/https) is not sp
 ```sh
 ✗ screener -t "example.com"
 # Captures both http://example.com/ and https://example.com/
-[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
+[screener] (INFO) Screenshot http://example.com/ saved to  ./screenshots                         
 [screener] (INFO) Screenshot https://example.com/ saved to ./screenshots
 
 ✗ screener -t "google.com"
@@ -82,13 +82,13 @@ Capture screenshots from multiple URLs listed in a file but wait for pages to lo
 
 ```sh
 ✗ screener -i urls.txt --wait-page --save-unique 
-[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
-[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                 
-[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots                                                                                                                                                                                                                                                                                                  
-[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots                                                                                                                                                                                                                                                                                            
-[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots                                                                                                                                                                                                                                                                                               
-[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots                                                                                                                                                                                                                                                                                             
-[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots                                                                                                                                                                                                                                                                                            
+[screener] (INFO) Screenshot http://example.com/ saved to ./screenshots                         
+[screener] (INFO) Screenshot https://example.com/ saved to ./screenshots                         
+[screener] (INFO) Screenshot https://github.com/ saved to ./screenshots                         
+[screener] (INFO) Screenshot https://consent.yahoo.com saved to ./screenshots                   
+[screener] (INFO) Screenshot https://www.google.com saved to ./screenshots                      
+[screener] (INFO) Screenshot https://www.facebook.com saved to ./screenshots                    
+[screener] (INFO) Screenshot https://www.hackerone.com saved to ./screenshots                   
 [screener] (INFO) Screenshot https://www.bugcrowd.com saved to ./screenshots 
 ```
 
@@ -140,9 +140,8 @@ func main() {
 	// Set options
 	options := screener.Options{
 		Concurrency:             10,
-		Timeout:                 10,
+		Timeout:                 15,
 		SaveScreenshots:         true,
-		SaveScreenshotsPath:     "customfolder",
 		WaitForPageLoad:         true,
 		WaitTime:                1,
 		FollowRedirects:         true,
@@ -150,8 +149,8 @@ func main() {
 		IgnoreCertificateErrors: true,
 		Verbose:                 false,
 		Silence:                 true,
-		CaptureWidth:            1920,
-		CaptureHeight:           1080,
+		CaptureWidth:            1366,
+		CaptureHeight:           768,
 	}
 
 	// Create a screener runner with options
@@ -161,14 +160,13 @@ func main() {
 	results := make(chan screener.Result)
 
 	// Start capturing URLs using multiple goroutines
-	go runner.MultipleStream(results, urls...)
+	go runner.RunAsync(results, urls...)
 
 	// Process the results as they come in
 	for result := range results {
 		fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
 	}
 }
-
 ```
 
 For more, see [examples](https://github.com/root4loot/screener/tree/master/examples)

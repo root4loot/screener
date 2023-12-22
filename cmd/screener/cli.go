@@ -51,7 +51,7 @@ func main() {
 		}
 		processResults(runner, targets...)
 	} else if cli.hasTarget() {
-		runner.Single(cli.TargetURL)
+		runner.Run(cli.TargetURL)
 	}
 }
 
@@ -75,7 +75,7 @@ func processResults(runner *screener.Runner, targets ...string) {
 	results := make(chan screener.Result)
 
 	// Start capturing URLs using multiple goroutines
-	go runner.MultipleStream(results, targets...)
+	go runner.RunAsync(results, targets...)
 
 	// Need to do something with the results
 	for result := range results {
