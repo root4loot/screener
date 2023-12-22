@@ -47,6 +47,6 @@ func main() {
 
 	// Process the results as they come in
 	for result := range results {
-		fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
+		fmt.Println(result.TargetURL, result.LandingURL, result.Error, len(result.Image))
 	}
 }

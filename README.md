@@ -144,7 +144,7 @@ func main() {
 
 	// Process the result
 	for _, result := range result {
-		fmt.Println(result.RequestURL, result.FinalURL, result.Error, len(result.Image))
+		fmt.Println(result.TargetURL, result.LandingURL, result.Error, len(result.Image))
 	}
 }
 

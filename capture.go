@@ -30,9 +30,9 @@ func Init() {
 
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
-func (r *Runner) worker(requestURL string) Result {
-	log.Info("Running worker on", requestURL)
-	result := Result{RequestURL: requestURL}
+func (r *Runner) worker(TargetURL string) Result {
+	log.Info("Running worker on", TargetURL)
+	result := Result{TargetURL: TargetURL}
 
 	// Launch browser with configured options
 	l := newLauncher(*r.Options)
@@ -57,14 +57,14 @@ func (r *Runner) worker(requestURL string) Result {
 		}
 	}
 
-	if err := page.Navigate(requestURL); err != nil {
-		log.Warnf("Error navigating to %s: %v", requestURL, err)
+	if err := page.Navigate(TargetURL); err != nil {
+		log.Warnf("Error navigating to %s: %v", TargetURL, err)
 		result.Error = err
 		return result
 	}
 
 	// Handle redirects
-	if !r.Options.FollowRedirects && page.MustInfo().URL != requestURL {
+	if !r.Options.FollowRedirects && page.MustInfo().URL != TargetURL {
 		log.Warn("Redirect detected, but FollowRedirects is disabled")
 		return result
 	}
@@ -83,11 +83,11 @@ func (r *Runner) worker(requestURL string) Result {
 	}
 
 	// Update final URL and return result
-	result.FinalURL = page.MustInfo().URL
+	result.LandingURL = page.MustInfo().URL
 
 	// Take and process screenshot
 	if err := processScreenshot(page, &result, r); err != nil {
-		log.Warnf("Error processing screenshot for %s: %v", requestURL, err)
+		log.Warnf("Error processing screenshot for %s: %v", TargetURL, err)
 		result.Error = err
 		return result
 	}
@@ -106,9 +106,9 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 
 	// Add text to image if required
 	if !r.Options.URLInImage {
-		result.Image, err = r.addTextToImage(result.Image, result.FinalURL)
+		result.Image, err = r.addTextToImage(result.Image, result.LandingURL)
 		if err != nil {
-			log.Warnf("Error adding text to image for %s: %v", result.FinalURL, err)
+			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
 			result.Error = err
 		}
 	}
@@ -119,7 +119,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			log.Warnf("Could not perform uniqueness check: %v", err)
 		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.RequestURL)
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.TargetURL)
 			shouldSave = false
 		}
 	}
@@ -130,7 +130,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			return err
 		}
-		log.Resultf("Screenshot for %s saved to %s", result.RequestURL, r.Options.SaveScreenshotsPath)
+		log.Resultf("Screenshot for %s saved to %s", result.TargetURL, r.Options.SaveScreenshotsPath)
 	}
 	return nil
 }
@@ -147,20 +147,20 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 		return "", err
 	}
 
-	parsedRequestURL, err := url.Parse(result.RequestURL)
+	parsedTargetURL, err := url.Parse(result.TargetURL)
 	if err != nil {
 		return "", err
 	}
 
-	parsedRedirectURL, err := url.Parse(result.FinalURL)
+	parsedRedirectURL, err := url.Parse(result.LandingURL)
 	if err != nil {
 		return "", err
 	}
 
-	parsedWriteURL := parsedRequestURL
+	parsedWriteURL := parsedTargetURL
 
 	// Remove path from the URL unless specified in target.
-	if parsedRequestURL.Path == "" {
+	if parsedTargetURL.Path == "" {
 		parsedWriteURL.Path = ""
 	}
 

@@ -44,8 +44,8 @@ type Options struct {
 
 type Result struct {
 	Target     string
-	RequestURL string
-	FinalURL   string
+	TargetURL  string
+	LandingURL string
 	Image      []byte
 	Error      error
 }
@@ -203,7 +203,7 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 		resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
 
 		// If HTTP fails or redirects to HTTPS and FollowRedirects is true, then try HTTPS.
-		if resultWithHTTP.Error != nil || (strings.HasPrefix(resultWithHTTP.FinalURL, "https://") && r.Options.FollowRedirects) {
+		if resultWithHTTP.Error != nil || (strings.HasPrefix(resultWithHTTP.LandingURL, "https://") && r.Options.FollowRedirects) {
 			log.Debugf("HTTP failed or redirected to HTTPS for %s: Trying HTTPS", target)
 			resultWithHTTPS := r.tryScheme("https://", target, normalizedTarget)
 			if resultWithHTTPS.Error == nil {
@@ -223,8 +223,8 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Result) {
 	result = r.runWorker(scheme + normalizedTarget)
 	result.Target = target
-	if strings.HasPrefix(result.FinalURL, scheme) {
-		log.Debug(target, "found ", scheme, ", returning ", result.FinalURL)
+	if strings.HasPrefix(result.LandingURL, scheme) {
+		log.Debug(target, "found ", scheme, ", returning ", result.LandingURL)
 	}
 	return result
 }
