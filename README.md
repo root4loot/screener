@@ -37,7 +37,7 @@ Usage: screener [options] (-u <target> | -i <targets.txt>)
 
 INPUT:
    -t,   --target                  single target
-   -i,   --infile                  file containing targets (one per line)
+   -l,   --list                    input file containing list of targets (one per line)
 
 CONFIGURATIONS:
    -c,  --concurrency              number of concurrent requests                  (Default: 10)
@@ -84,7 +84,7 @@ Capture a screenshot from a single URL. If the URL scheme (http/https) is not sp
 Capture screenshots from multiple URLs listed in a file but wait for pages to load first and only save unique images.
 
 ```sh
-✗ screener -i urls.txt --save-unique 
+✗ screener -l urls.txt --save-unique 
 [screener] (RES) Screenshot http://example.com/ saved to ./screenshots                         
 [screener] (RES) Screenshot https://example.com/ saved to ./screenshots                         
 [screener] (RES) Screenshot https://github.com/ saved to ./screenshots                         

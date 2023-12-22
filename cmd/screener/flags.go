@@ -20,7 +20,7 @@ func (c *CLI) usage() {
 
 	fmt.Fprintf(w, "\nINPUT:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t      %s\n", "-t", "--target", "single target")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t        %s\n", "-i", "--infile", " file containing targets (one per line)")
+	fmt.Fprintf(w, "\t%s,   %s\t\t\t        %s\n", "-l", "--list", " input file containing list of targets (one per line)")
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
@@ -55,8 +55,8 @@ func (c *CLI) parseFlags() {
 	// TARGET
 	flag.StringVar(&c.TargetURL, "target", "", "")
 	flag.StringVar(&c.TargetURL, "t", "", "")
-	flag.StringVar(&c.Infile, "i", "", "")
-	flag.StringVar(&c.Infile, "infile", "", "")
+	flag.StringVar(&c.Infile, "l", "", "")
+	flag.StringVar(&c.Infile, "list", "", "")
 
 	// CONFIGURATIONS
 	flag.IntVar(&c.Options.Concurrency, "concurrency", screener.DefaultOptions().Concurrency, "")
