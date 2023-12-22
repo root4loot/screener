@@ -36,8 +36,8 @@ docker run -it screener -h
 Usage: screener [options] (-u <target> | -i <targets.txt>)
 
 INPUT:
-   -t,   --target                 single target
-   -i,   --infile                 file containing targets (one per line)
+   -t,   --target                  single target
+   -i,   --infile                  file containing targets (one per line)
 
 CONFIGURATIONS:
    -c,  --concurrency              number of concurrent requests                  (Default: 10)
@@ -48,6 +48,7 @@ CONFIGURATIONS:
    -fr,  --follow-redirects        follow redirects                               (Default: true)
    -cw,  --capture-width           screenshot pixel width                         (Default: 1366)
    -ch,  --capture-height          screenshot pixel height                        (Default: 768)
+   -cf,  --capture-full            capture full page                              (Default: 768)
    -wp,  --wait-page               wait for page to fully load before capturing   (Default: true)
    -wt,  --wait-time               wait time before capturing (seconds)           (Default: 30)
    -dc,  --delay-between-capture   delay between capture (seconds)                (Default: 0)

@@ -36,6 +36,7 @@ type Options struct {
 	IgnoreStatusCodes       []int64        // List of status codes to ignore
 	DelayBetweenCapture     int            // Delay in seconds between captures for multiple targets
 	FollowRedirects         bool           // Follow redirects
+	CaptureFull             bool           // Whether to take a full page screenshot
 	Silence                 bool           // Silence output
 	Verbose                 bool           // Verbose logging
 }
@@ -66,6 +67,7 @@ func DefaultOptions() *Options {
 		DisableHTTP2:            true,
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
+		CaptureFull:             false,
 		WaitForPageLoad:         true,
 		WaitTime:                30,
 		DelayBetweenCapture:     0,

@@ -156,7 +156,7 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 // processScreenshot handles taking, saving, and uniqueness checking of screenshots.
 func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	shouldSave := true
-	screenshot, err := page.Screenshot(false, nil)
+	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
 	if err != nil {
 		return err
 	}
