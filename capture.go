@@ -46,8 +46,7 @@ func (r *Runner) worker(requestURL string) Result {
 
 		err := page.SetViewport(viewport)
 		if err != nil {
-			log.Warnf("Error setting viewport: %v", err)
-			// Handle the error as needed
+			log.Fatalf("Error setting viewport: %v", err)
 		}
 	}
 
