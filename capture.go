@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/rod/lib/proto"
 	"github.com/root4loot/goutils/log"
 )
 
@@ -32,8 +33,24 @@ func (r *Runner) worker(requestURL string) Result {
 	browser := rod.New().ControlURL(browserURL).MustConnect()
 	defer browser.MustClose()
 
-	// Navigate to the URL
 	page := browser.MustPage("")
+
+	// Set the viewport if CaptureWidth and CaptureHeight are specified
+	if r.Options.CaptureWidth != 0 && r.Options.CaptureHeight != 0 {
+		viewport := &proto.EmulationSetDeviceMetricsOverride{
+			Width:             r.Options.CaptureWidth,
+			Height:            r.Options.CaptureHeight,
+			DeviceScaleFactor: 1,
+			Mobile:            false,
+		}
+
+		err := page.SetViewport(viewport)
+		if err != nil {
+			log.Warnf("Error setting viewport: %v", err)
+			// Handle the error as needed
+		}
+	}
+
 	if err := page.Navigate(requestURL); err != nil {
 		log.Warnf("Error navigating to %s: %v", requestURL, err)
 		result.Error = err
@@ -68,6 +85,7 @@ func (r *Runner) worker(requestURL string) Result {
 
 	// Update final URL and return result
 	result.FinalURL = page.MustInfo().URL
+
 	return result
 }
 
@@ -139,7 +157,7 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 // processScreenshot handles taking, saving, and uniqueness checking of screenshots.
 func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	shouldSave := true
-	screenshot, err := page.Screenshot(true, nil)
+	screenshot, err := page.Screenshot(false, nil)
 	if err != nil {
 		return err
 	}
