@@ -196,21 +196,23 @@ func (r *Runner) capture(target string) Result {
 func (r *Runner) processTarget(target, normalizedTarget string) (result Result) {
 	if !hasScheme(normalizedTarget) {
 		// Try with http scheme.
-		result = r.tryScheme("http://", target, normalizedTarget)
-		if strings.HasPrefix(result.FinalURL, "https://") {
-			log.Debug(target, "redirected to ", result.FinalURL)
-			return result
+		resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
+
+		// If HTTP fails or redirects to HTTPS and FollowRedirects is true, then try HTTPS.
+		if resultWithHTTP.Error != nil || (strings.HasPrefix(resultWithHTTP.FinalURL, "https://") && r.Options.FollowRedirects) {
+			log.Debugf("HTTP failed or redirected to HTTPS for %s: Trying HTTPS", target)
+			resultWithHTTPS := r.tryScheme("https://", target, normalizedTarget)
+			if resultWithHTTPS.Error == nil {
+				return resultWithHTTPS
+			}
 		}
 
-		// Retry with https scheme if http did not redirect to https.
-		log.Debug(target, "did not redirect. Trying https://", normalizedTarget)
-		return r.tryScheme("https://", target, normalizedTarget)
+		// Return the HTTP result if HTTPS is not attempted or fails.
+		return resultWithHTTP
 	}
 
 	// Directly run worker if scheme is present.
-	result = r.runWorker(normalizedTarget)
-	result.Target = target
-	return result
+	return r.runWorker(normalizedTarget)
 }
 
 // tryScheme tries to capture the target with the given scheme.
