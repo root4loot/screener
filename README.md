@@ -5,17 +5,15 @@
 screener is a command-line interface (CLI) and Golang library for capturing screenshots of web pages. Built on top of [Rod](https://github.com/go-rod/rod).
 
 ## Features
-
-- **Stream URLs for Screenshotting**: Accepts URLs via standard input (STDIN) and processes them in real-time.
-- **Max Wait for Page Load**: Waits for a specified maximum time for the web page to load before capturing the screenshot, ensuring the capture of the most relevant content.
-- **Redirect Handling**: Customizable option for following or ignoring redirects, providing control over how URL changes are managed.
-- **Unique Screenshots**: Offers an option to save only unique screenshots, avoiding duplication.
-- **Concurrency Support**: Facilitates fast processing with concurrent requests.
-- **Certificate Error Handling**: Includes an option to ignore SSL certificate errors, useful for testing environments.
-- **HTTP/2 Control**: Allows disabling HTTP/2, offering compatibility with different server configurations.
-- **Custom User-Agent**: Enables setting a custom user-agent for requests, allowing simulation of different browsers or devices.
-- **URL in Image**: Optionally includes the URL in the captured image, providing context and reference directly in the screenshot.
-
+- **Stream URLs**: Input URLs via standard input (STDIN) for real-time processing.
+- **Max Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
+- **Redirect Handling**: Customize redirect behavior to follow or ignore URL changes.
+- **Unique Screenshots**: Save only unique screenshots to avoid duplicates.
+- **Concurrency**: Support for concurrent requests for faster processing.
+- **Certificate Error Handling**: Option to ignore SSL certificate errors for testing environments.
+- **HTTP/2 Control**: Disable HTTP/2 for compatibility with various server configurations.
+- **Custom User-Agent**: Set a custom user-agent for requests to simulate different browsers or devices.
+- **URL in Image**: Choose to include the URL directly in the captured image for context and reference.
 
 ## Installation
 
