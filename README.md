@@ -110,6 +110,14 @@ Stream URLs to Screener, capturing screenshots as they are received:
 [screener] (RES) Screenshot https://github.com/ saved to ./screenshots
 ```
 
+## Example Screenshot
+
+<p align="center">
+<img src="./assets/https_example.com.png" alt="screenshot example"/>
+</p>
+
+**Note:** You can remove the URL from the image by using the `-wu` or `--without-url` flag when running the tool.
+
 
 ## Library Example 📦
 
