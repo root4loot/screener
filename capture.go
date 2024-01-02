@@ -82,6 +82,10 @@ func (r *Runner) worker(TargetURL string) Result {
 		}
 	}
 
+	// Additional fixed wait time after page load event
+	fixedWait := 2 // Fixed wait time in seconds, adjust as needed
+	time.Sleep(time.Duration(fixedWait) * time.Second)
+
 	// Update final URL and return result
 	result.LandingURL = page.MustInfo().URL
 
