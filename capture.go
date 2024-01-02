@@ -106,7 +106,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 
 	// Add text to image if required
 	if !r.Options.URLInImage {
-		result.Image, err = r.addTextToImage(result.Image, result.LandingURL)
+		result.Image, err = r.addURLtoImage(result.Image, result.LandingURL)
 		if err != nil {
 			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
 			result.Error = err
@@ -238,12 +238,20 @@ func checkHashUnique(imageData []byte) (bool, error) {
 	return true, nil
 }
 
-// addTextToImage adds text to the bottom of the image with padding and border.
-func (r *Runner) addTextToImage(imgBytes []byte, text string) ([]byte, error) {
+// addURLtoImage adds text to the bottom of the image with padding and border.
+func (r *Runner) addURLtoImage(imgBytes []byte, rawURL string) ([]byte, error) {
 	img, _, err := image.Decode(bytes.NewReader(imgBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}
+
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
+	}
+
+	// Construct a shorter URL string with just the scheme, domain, and port.
+	shortURL := parsedURL.Scheme + "://" + parsedURL.Host
 
 	// Constants for drawing the text box.
 	const padding = 20
@@ -271,7 +279,7 @@ func (r *Runner) addTextToImage(imgBytes []byte, text string) ([]byte, error) {
 	dc.SetColor(color.Black) // Use black for the text color.
 
 	dc.SetFontFace(inconsolata.Regular8x16)
-	dc.DrawStringAnchored(text, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
+	dc.DrawStringAnchored(shortURL, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
 
 	// Encode the context to a new image.
 	var buf bytes.Buffer
