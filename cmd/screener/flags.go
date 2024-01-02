@@ -19,8 +19,8 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -i <targets.txt>)\n", os.Args[0])
 
 	fmt.Fprintf(w, "\nINPUT:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t      %s\n", "-t", "--target", "single target")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t        %s\n", "-l", "--list", " input file containing list of targets (one per line)")
+	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t      %s\n", "-t", "--target", "single target")
+	fmt.Fprintf(w, "\t%s,  %s\t\t\t        %s\n", "-l", "--list", " input file containing list of targets (one per line)")
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
@@ -33,7 +33,7 @@ func (c *CLI) usage() {
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-ch", "--capture-height", "screenshot pixel height", screener.DefaultOptions().CaptureHeight)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-cf", "--capture-full", "capture full page", screener.DefaultOptions().CaptureHeight)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wp", "--wait-page", "wait for page to fully load before capturing", screener.DefaultOptions().WaitForPageLoad)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wt", "--wait-time", "wait time before capturing (seconds)", screener.DefaultOptions().WaitTime)
+	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-wt", "--wait-time", "max wait time before capturing (seconds)", screener.DefaultOptions().WaitTime)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dc", "--delay-between-capture", "delay between capture (seconds)", screener.DefaultOptions().DelayBetweenCapture)
 	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-ice", "--ignore-cert-err", "ignore certificate errors", screener.DefaultOptions().IgnoreCertificateErrors)
 	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-isc", "--ignore-status-codes", "ignore HTTP status codes  (comma separated)", screener.DefaultOptions().IgnoreStatusCodes)
