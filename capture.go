@@ -248,13 +248,11 @@ func (r *Runner) addURLtoImage(imgBytes []byte, rawURL string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}
 
-	parsedURL, err := url.Parse(rawURL)
+	// Get the printable URL.
+	printURL, err := getPrintableURL(rawURL, 159)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
+		return nil, err
 	}
-
-	// Construct a shorter URL string with just the scheme, domain, and port.
-	shortURL := parsedURL.Scheme + "://" + parsedURL.Host
 
 	// Constants for drawing the text box.
 	const padding = 20
@@ -282,7 +280,7 @@ func (r *Runner) addURLtoImage(imgBytes []byte, rawURL string) ([]byte, error) {
 	dc.SetColor(color.Black) // Use black for the text color.
 
 	dc.SetFontFace(inconsolata.Regular8x16)
-	dc.DrawStringAnchored(shortURL, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
+	dc.DrawStringAnchored(printURL, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
 
 	// Encode the context to a new image.
 	var buf bytes.Buffer
@@ -291,4 +289,16 @@ func (r *Runner) addURLtoImage(imgBytes []byte, rawURL string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// getPrintableURL returns a shortened URL if the length exceeds a certain limit.
+func getPrintableURL(rawURL string, maxLength int) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse URL: %w", err)
+	}
+	if len(parsedURL.String()) > maxLength {
+		return parsedURL.Scheme + "://" + parsedURL.Host, nil
+	}
+	return parsedURL.String(), nil
 }
