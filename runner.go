@@ -31,7 +31,6 @@ type Options struct {
 	SaveUnique              bool           // Save unique screenshots only
 	Scope                   *goscope.Scope // Scope to use
 	UserAgent               string         // User agent to use
-	WaitForPageLoad         bool           // Wait for page to load before capturing
 	WaitTime                int            // Max wait time in seconds before taking screenshot, regardless of page load completion
 	IgnoreStatusCodes       []int64        // List of status codes to ignore
 	DelayBetweenCapture     int            // Delay in seconds between captures for multiple targets
@@ -69,7 +68,6 @@ func DefaultOptions() *Options {
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
 		CaptureFull:             false,
-		WaitForPageLoad:         true,
 		WaitTime:                30,
 		DelayBetweenCapture:     0,
 		FollowRedirects:         true,

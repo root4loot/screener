@@ -74,12 +74,10 @@ func (r *Runner) worker(TargetURL string) Result {
 	defer cancel()
 
 	// Wait for the page to load with a timeout
-	if r.Options.WaitForPageLoad {
-		err := page.Context(ctx).WaitLoad()
-		if err != nil {
-			log.Warnf("Wait for page load timed out after %v: %v", time.Duration(r.Options.WaitTime)*time.Second, err)
-			log.Warn("Proceeding to take a screenshot anyway.")
-		}
+	err := page.Context(ctx).WaitLoad()
+	if err != nil {
+		log.Warnf("Wait for page load timed out after %v: %v", time.Duration(r.Options.WaitTime)*time.Second, err)
+		log.Warn("Proceeding to take a screenshot anyway.")
 	}
 
 	// Additional fixed wait time after page load event
