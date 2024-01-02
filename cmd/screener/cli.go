@@ -19,7 +19,6 @@ type CLI struct {
 	Infile            string
 	Version           bool
 	Help              bool
-	Outfolder         string
 	IgnoreStatusCodes string
 }
 
@@ -28,7 +27,7 @@ func init() {
 }
 
 func main() {
-	cli := &CLI{screener.NewRunner(), "", "", false, false, "", ""}
+	cli := &CLI{screener.NewRunner(), "", "", false, false, ""}
 	cli.parseFlags()
 	cli.checkForExits()
 	cli.SetCLIOpts()
