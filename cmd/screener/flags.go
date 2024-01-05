@@ -73,7 +73,7 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ice", screener.DefaultOptions().IgnoreCertificateErrors, "")
 	flag.IntVar(&c.Options.MaxWait, "max-wait", screener.DefaultOptions().MaxWait, "")
 	flag.IntVar(&c.Options.MaxWait, "mw", screener.DefaultOptions().MaxWait, "")
-	flag.IntVar(&c.Options.MaxWait, "fixed-wait", screener.DefaultOptions().FixedWait, "")
+	flag.IntVar(&c.Options.FixedWait, "fixed-wait", screener.DefaultOptions().FixedWait, "")
 	flag.IntVar(&c.Options.FixedWait, "fw", screener.DefaultOptions().FixedWait, "")
 	flag.IntVar(&c.Options.Timeout, "timeout", screener.DefaultOptions().Timeout, "")
 	flag.IntVar(&c.Options.Timeout, "to", screener.DefaultOptions().Timeout, "")
