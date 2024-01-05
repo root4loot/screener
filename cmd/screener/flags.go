@@ -24,7 +24,7 @@ func (c *CLI) usage() {
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d seconds)\n", "-t", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
+	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d seconds)\n", "-to", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %s)\n", "-ua", "--user-agent", "set user agent", "Chrome Headless")
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-su", "--save-unique", "save unique screenshots only", screener.DefaultOptions().SaveUnique)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dh", "--disable-http2", "disable HTTP2", screener.DefaultOptions().DisableHTTP2)

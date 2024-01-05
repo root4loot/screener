@@ -41,7 +41,7 @@ INPUT:
 
 CONFIGURATIONS:
    -c,   --concurrency             number of concurrent requests                 (Default: 10)
-   -t,   --timeout                 timeout for screenshot capture                (Default: 15 seconds)
+   -to,   --timeout                timeout for screenshot capture                (Default: 15 seconds)
    -ua,  --user-agent              set user agent                                (Default: Chrome Headless)
    -su,  --save-unique             save unique screenshots only                  (Default: false)
    -dh,  --disable-http2           disable HTTP2                                 (Default: true)
