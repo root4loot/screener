@@ -49,7 +49,6 @@ CONFIGURATIONS:
    -cw,  --capture-width           screenshot pixel width                        (Default: 1366)
    -ch,  --capture-height          screenshot pixel height                       (Default: 768)
    -cf,  --capture-full            capture full page                             (Default: 768)
-   -mw,  --max-wait                max wait time before capturing (seconds)      (Default: 30)
    -fw,  --fixed-wait              fixed wait time before capturing (seconds)    (Default: 2)
    -dc,  --delay-between-capture   delay between capture (seconds)               (Default: 0)
    -ice, --ignore-cert-err         ignore certificate errors                     (Default: true)

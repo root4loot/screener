@@ -31,8 +31,12 @@ func Init() {
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
 func (r *Runner) worker(TargetURL string) Result {
-	log.Info("Running worker on", TargetURL)
+	log.Info("Screenshotting", TargetURL)
 	result := Result{TargetURL: TargetURL}
+
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
+	defer cancel()
 
 	// Launch browser with configured options
 	l := newLauncher(*r.Options)
@@ -57,7 +61,7 @@ func (r *Runner) worker(TargetURL string) Result {
 		}
 	}
 
-	if err := page.Navigate(TargetURL); err != nil {
+	if err := page.Context(ctx).Navigate(TargetURL); err != nil {
 		log.Warnf("Error navigating to %s: %v", TargetURL, err)
 		result.Error = err
 		return result
@@ -69,15 +73,10 @@ func (r *Runner) worker(TargetURL string) Result {
 		return result
 	}
 
-	// Create a context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.MaxWait)*time.Second)
-	defer cancel()
-
 	// Wait for the page to load with a timeout
 	err := page.Context(ctx).WaitLoad()
 	if err != nil {
-		log.Warnf("Wait for page load timed out after %v: %v", time.Duration(r.Options.MaxWait)*time.Second, err)
-		log.Warn("Proceeding to take a screenshot anyway.")
+		log.Warnf("%s timed out after %v: %v", time.Duration(r.Options.Timeout)*time.Second, TargetURL, err)
 	}
 
 	// Additional fixed wait time after page load event
