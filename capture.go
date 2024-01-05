@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"embed"
 	"encoding/hex"
 	"fmt"
 	"image"
@@ -19,8 +20,9 @@ import (
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
+	"github.com/golang/freetype/truetype"
 	"github.com/root4loot/goutils/log"
-	"golang.org/x/image/font/inconsolata"
+	"golang.org/x/image/font"
 )
 
 func Init() {
@@ -31,7 +33,7 @@ func Init() {
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
 func (r *Runner) worker(TargetURL string) Result {
-	log.Info("Screenshotting", TargetURL)
+	log.Info("Screening", TargetURL)
 	result := Result{TargetURL: TargetURL}
 
 	// Create a context with a timeout
@@ -278,8 +280,12 @@ func (r *Runner) addURLtoImage(imgBytes []byte, rawURL string) ([]byte, error) {
 	// Set up text properties and draw text.
 	dc.SetColor(color.Black) // Use black for the text color.
 
-	dc.SetFontFace(inconsolata.Regular8x16)
-	dc.DrawStringAnchored(printURL, float64(w)/2, yLine+float64(padding), 0.5, 0.3)
+	// Load and set the custom font.
+	fontFace := loadFont()
+	dc.SetFontFace(fontFace)
+
+	// Draw the string.
+	dc.DrawStringAnchored(printURL, float64(w)/2, yLine+float64(padding), 0.2, 0.3)
 
 	// Encode the context to a new image.
 	var buf bytes.Buffer
@@ -300,4 +306,28 @@ func getPrintableURL(rawURL string, maxLength int) (string, error) {
 		return parsedURL.Scheme + "://" + parsedURL.Host, nil
 	}
 	return parsedURL.String(), nil
+}
+
+// Embed the font file.
+//
+//go:embed assets/Roboto-Medium.ttf
+var fontBytes embed.FS
+
+func loadFont() font.Face {
+	// Load the font
+	fontData, err := fontBytes.ReadFile("assets/Roboto-Medium.ttf")
+	if err != nil {
+		log.Fatalf("Failed to read embedded font: %v", err)
+	}
+
+	// Parse the font
+	ttFont, err := truetype.Parse(fontData)
+	if err != nil {
+		log.Fatalf("Failed to parse embedded font: %v", err)
+	}
+
+	// Return the font face to be used in your drawing context
+	return truetype.NewFace(ttFont, &truetype.Options{
+		Size: 14,
+	})
 }
