@@ -33,7 +33,7 @@ docker run -it screener -h
 ## Usage
 
 ```
-Usage: screener [options] (-u <target> | -i <targets.txt>)
+Usage: screener [options] (-t <target> | -i <targets.txt>)
 
 INPUT:
    -t,  --target                   single target
