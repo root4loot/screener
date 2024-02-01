@@ -56,8 +56,6 @@ func init() {
 
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
-	log.Debug("Getting default options...")
-
 	return &Options{
 		Concurrency:             10,
 		Timeout:                 15,
@@ -80,8 +78,6 @@ func DefaultOptions() *Options {
 
 // NewRunner returns a new runner
 func NewRunner() *Runner {
-	log.Debug("Creating new runner...")
-
 	options := DefaultOptions()
 	newScope := goscope.NewScope()
 	options.Scope = newScope
@@ -95,7 +91,6 @@ func NewRunner() *Runner {
 // NewRunnerWithOptions returns a new runner with the specified options
 func NewRunnerWithOptions(options Options) *Runner {
 	SetLogLevel(&options)
-	log.Debug("Creating new runner with options...")
 
 	// If no scope is specified, create a new one
 	if options.Scope == nil {
@@ -135,7 +130,6 @@ func (r *Runner) Run(targets ...string) (results []Result) {
 
 // RunAsync captures multiple targets asynchronously and streams the results using channels.
 func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
-	log.Debug("Running async capture...")
 	defer close(resultsChan)
 
 	sem := make(chan struct{}, r.Options.Concurrency)
