@@ -211,7 +211,8 @@ func newLauncher(options Options) *launcher.Launcher {
 
 	l := launcher.New().
 		Headless(true).
-		Bin(path)
+		Bin(path).
+		NoSandbox(true)
 
 	if options.UserAgent != "" {
 		l.Set("user-agent", options.UserAgent)
