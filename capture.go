@@ -206,8 +206,12 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 
 // newLauncher creates a new browser launcher with the specified options.
 func newLauncher(options Options) *launcher.Launcher {
+	// Find the browser path
+	path, _ := launcher.LookPath()
+
 	l := launcher.New().
-		Headless(true) // Set to true to ensure headless mode
+		Headless(true).
+		Bin(path)
 
 	if options.UserAgent != "" {
 		l.Set("user-agent", options.UserAgent)
