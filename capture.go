@@ -22,7 +22,6 @@ import (
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/golang/freetype/truetype"
 	"github.com/root4loot/goutils/log"
-	"github.com/root4loot/goutils/urlutil"
 	"golang.org/x/image/font"
 )
 
@@ -34,7 +33,7 @@ func Init() {
 var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
 
 func (r *Runner) worker(TargetURL string) Result {
-	log.Info("Screening", TargetURL)
+	log.Info("Preparing screenshot:", TargetURL)
 	result := Result{TargetURL: TargetURL}
 
 	// Create a context with a timeout
@@ -111,16 +110,11 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	}
 	result.Image = screenshot
 
-	finalOrigin, err := urlutil.GetOrigin(result.LandingURL)
-	if err != nil {
-		return err
-	}
-
 	// Add text to image if required
 	if !r.Options.URLInImage {
-		result.Image, err = r.addURLtoImage(result.Image, finalOrigin)
+		result.Image, err = r.addURLtoImage(result.Image, result.LandingURL)
 		if err != nil {
-			log.Warnf("Error adding text to image for %s: %v", finalOrigin, err)
+			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
 			result.Error = err
 		}
 	}
@@ -131,7 +125,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			log.Warnf("Could not perform uniqueness check: %v", err)
 		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.TargetURL)
+			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.LandingURL)
 			shouldSave = false
 		}
 	}
@@ -142,7 +136,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			return err
 		}
-		log.Resultf("Screenshot for %s saved to %s", finalOrigin, r.Options.SaveScreenshotsPath)
+		log.Resultf("Successful screenshot: %s", result.LandingURL)
 	}
 	return nil
 }

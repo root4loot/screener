@@ -5,19 +5,21 @@
 screener is a command-line interface (CLI) and Golang library for capturing screenshots of web pages. Built on top of [Rod](https://github.com/go-rod/rod).
 
 ## Features
+
 - **Stream URLs**: Input URLs via standard input (STDIN) for real-time processing.
-- **Max Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
+- **Fixed Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
 - **Redirect Handling**: Customize redirect behavior to follow or ignore URL changes.
 - **Unique Screenshots**: Save only unique screenshots to avoid duplicates.
 - **Concurrency**: Support for concurrent requests for faster processing.
 - **Certificate Error Handling**: Option to ignore SSL certificate errors for testing environments.
 - **HTTP/2 Control**: Disable HTTP/2 for compatibility with various server configurations.
 - **Custom User-Agent**: Set a custom user-agent for requests to simulate different browsers or devices.
-- **URL in Image**: Choose to include the URL directly in the captured image for context and reference.
+- **Imprint URL in Image**: Choose to include the URL directly in the captured image for context and reference.
 
 ## Installation
 
 ### Go
+
 ```
 go install github.com/root4loot/screener/cmd/screener@latest
 ```
@@ -65,48 +67,63 @@ OUTPUT:
 
 ## Example
 
-### Screenshotting a Single Target
-Capture a screenshot from a single URL. If the URL scheme (http/https) is not specified, then it will handle both:
+### Screenshot Single Target
+
+Capture a single target. If the scheme (http/https) is not specified, then it will default to https and fallback to http if the former fails.
 
 ```sh
-✗ screener -t "example.com"
-# Captures both http://example.com/ and https://example.com/
-[screener] (RES) Screenshot http://example.com/ saved to  ./screenshots                         
-[screener] (RES) Screenshot https://example.com/ saved to ./screenshots
-
-✗ screener -t "google.com"
-# Captures https://www.google.com only due to redirect
-[screener] (RES) Screenshot https://www.google.com saved to ./screenshots 
+screener -t "example.com"
+[screener] (INF) Preparing screenshot: https://example.com
+[screener] (RES) Successful screenshot: https://example.com/
 ```
 
-### Screenshotting URLs from a File
-Capture screenshots from multiple URLs listed in a file but wait for pages to load first and only save unique images.
+### Screenshot Multiple Targets
+
+Capture multiple targets.
 
 ```sh
-✗ screener -l urls.txt --save-unique 
-[screener] (RES) Screenshot http://example.com/ saved to ./screenshots                         
-[screener] (RES) Screenshot https://example.com/ saved to ./screenshots                         
-[screener] (RES) Screenshot https://github.com/ saved to ./screenshots                         
-[screener] (RES) Screenshot https://consent.yahoo.com saved to ./screenshots                   
-[screener] (RES) Screenshot https://www.google.com saved to ./screenshots                      
-[screener] (RES) Screenshot https://www.facebook.com saved to ./screenshots                    
-[screener] (RES) Screenshot https://www.hackerone.com saved to ./screenshots                   
-[screener] (RES) Screenshot https://www.bugcrowd.com saved to ./screenshots 
+$ cat targets.txt
+google.com
+bugcrowd.com
+hackerone.com/sitemap.xml
+http://example.com
+https://scanme.sh
 ```
 
-## Piping URLs from SDIN
-Stream URLs to Screener, capturing screenshots as they are received:
+Note that targets can be IP, domain, or full URL.
 
 ```sh
-✗ cat urls.txt | screener                        
-[screener] (RES) Screenshot http://example.com/ saved to ./screenshots
-[screener] (RES) Screenshot https://example.com/ saved to ./screenshots
-[screener] (RES) Screenshot https://www.hackerone.com saved to ./screenshots
-[screener] (RES) Screenshot https://www.bugcrowd.com saved to ./screenshots
-[screener] (RES) Screenshot https://www.google.com saved to ./screenshots
-[screener] (RES) Screenshot https://www.facebook.com saved to ./screenshots
-[screener] (RES) Screenshot https://consent.yahoo.com saved to ./screenshots
-[screener] (RES) Screenshot https://github.com/ saved to ./screenshots
+$ screener -l targets.txt
+[screener] (INF) Preparing screenshot: https://scanme.sh/
+[screener] (INF) Preparing screenshot: https://google.com
+[screener] (INF) Preparing screenshot: http://example.com/
+[screener] (INF) Preparing screenshot: https://bugcrowd.com
+[screener] (INF) Preparing screenshot: https://hackerone.com/sitemap.xml
+[screener] (INF) Preparing screenshot: http://172.64.151.42
+[screener] (RES) Successful screenshot: http://example.com/
+[screener] (RES) Successful screenshot: https://hackerone.com/sitemap.xml
+[screener] (RES) Successful screenshot: http://172.64.151.42/
+[screener] (RES) Successful screenshot: https://scanme.sh/
+[screener] (RES) Successful screenshot: https://www.google.com/
+[screener] (RES) Successful screenshot: https://www.bugcrowd.com
+```
+
+You may also "stream" targets to screener, capturing screenshots as they are received:
+
+```sh
+✗ cat targets.txt | screener
+[screener] (INF) Preparing screenshot: https://google.com
+[screener] (RES) Successful screenshot: https://www.google.com/
+[screener] (INF) Preparing screenshot: https://bugcrowd.com
+[screener] (RES) Successful screenshot: https://www.bugcrowd.com/
+[screener] (INF) Preparing screenshot: http://172.64.151.42
+[screener] (RES) Successful screenshot: http://172.64.151.42/
+[screener] (INF) Preparing screenshot: https://hackerone.com/sitemap.xml
+[screener] (RES) Successful screenshot: https://hackerone.com/sitemap.xml
+[screener] (INF) Preparing screenshot: http://example.com/
+[screener] (RES) Successful screenshot: http://example.com/
+[screener] (INF) Preparing screenshot: https://scanme.sh/
+[screener] (RES) Successful screenshot: https://scanme.sh/
 ```
 
 ## Example Screenshot
@@ -116,7 +133,6 @@ Stream URLs to Screener, capturing screenshots as they are received:
 </p>
 
 **Note:** You can remove the URL from the image by using the `-wu` or `--without-url` flag when running the tool.
-
 
 ## Library Example 📦
 
