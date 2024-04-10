@@ -192,21 +192,21 @@ func (r *Runner) capture(target string) Result {
 
 // processTarget processes the given target based on its scheme.
 func (r *Runner) processTarget(target, normalizedTarget string) (result Result) {
-	if !hasScheme(normalizedTarget) {
-		// Try with http scheme.
-		resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
+	if !urlutil.HasScheme(normalizedTarget) {
+		// Initially try with https scheme.
+		resultWithHTTPS := r.tryScheme("https://", target, normalizedTarget)
 
-		// If HTTP fails or redirects to HTTPS and FollowRedirects is true, then try HTTPS.
-		if resultWithHTTP.Error != nil || (strings.HasPrefix(resultWithHTTP.LandingURL, "https://") && r.Options.FollowRedirects) {
-			log.Debugf("HTTP failed or redirected to HTTPS for %s: Trying HTTPS", target)
-			resultWithHTTPS := r.tryScheme("https://", target, normalizedTarget)
-			if resultWithHTTPS.Error == nil {
-				return resultWithHTTPS
+		// If HTTPS fails, then try HTTP unless it's a redirect from HTTP to HTTPS.
+		if resultWithHTTPS.Error != nil {
+			log.Debugf("HTTPS failed for %s: Trying HTTP", target)
+			resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
+			if resultWithHTTP.Error == nil || !strings.HasPrefix(resultWithHTTP.LandingURL, "https://") {
+				return resultWithHTTP
 			}
 		}
 
-		// Return the HTTP result if HTTPS is not attempted or fails.
-		return resultWithHTTP
+		// Return the HTTPS result if HTTP is not attempted or fails due to a redirect back to HTTPS.
+		return resultWithHTTPS
 	}
 
 	// Directly run worker if scheme is present.
@@ -217,9 +217,6 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Result) {
 	result = r.runWorker(scheme + normalizedTarget)
 	result.Target = target
-	if strings.HasPrefix(result.LandingURL, scheme) {
-		log.Debug(target, "found ", scheme, ", returning ", result.LandingURL)
-	}
 	return result
 }
 
@@ -247,8 +244,8 @@ func normalize(target string) (string, error) {
 	target = strings.TrimSpace(target) // Trim whitespace
 
 	// Add temporary scheme if missing
-	if !hasScheme(target) {
-		target = "http://" + target
+	if !urlutil.HasScheme(target) {
+		target = "x://" + target
 	}
 
 	// Parse the target
@@ -276,11 +273,6 @@ func normalize(target string) (string, error) {
 	target = strings.TrimPrefix(u.String(), "x://") // Remove temporary scheme
 
 	return target, nil
-}
-
-// hasScheme checks if the target has a scheme
-func hasScheme(target string) bool {
-	return strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://")
 }
 
 func (r *Runner) addVisited(str string) {
