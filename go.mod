@@ -21,15 +21,15 @@ require (
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/chromedp/chromedp v0.9.3
 	github.com/fogleman/gg v1.3.0
+	github.com/glaslos/ssdeep v0.3.3
 	github.com/go-rod/rod v0.114.5
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/root4loot/goscope v0.0.0-20231124190357-df9f3447c461
-	github.com/root4loot/goutils v0.0.0-20240410150244-66702388a5d8
+	github.com/root4loot/goutils v0.0.0-20240410180004-65b39fb45654
 	golang.org/x/image v0.14.0
 )

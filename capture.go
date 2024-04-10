@@ -3,9 +3,7 @@ package screener
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"embed"
-	"encoding/hex"
 	"fmt"
 	"image"
 	"image/color"
@@ -17,6 +15,7 @@ import (
 	"time"
 
 	"github.com/fogleman/gg"
+	"github.com/glaslos/ssdeep"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
@@ -30,7 +29,7 @@ func Init() {
 	log.SetLevel(log.InfoLevel)
 }
 
-var seenHashes = make(map[string]struct{}) // map of hashes to check for uniqueness
+var fuzzyHashes = make(map[string]map[string]bool) // Map of fuzzy hashes for duplicate detection
 
 func (r *Runner) worker(TargetURL string) Result {
 	log.Info("Preparing screenshot:", TargetURL)
@@ -116,17 +115,6 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
 			result.Error = err
-		}
-	}
-
-	// Check for screenshot uniqueness if required
-	if r.Options.SaveUnique {
-		unique, err := checkHashUnique(result.Image)
-		if err != nil {
-			log.Warnf("Could not perform uniqueness check: %v", err)
-		} else if !unique {
-			log.Infof("Duplicate screenshot found for %s. Skipping save.", result.LandingURL)
-			shouldSave = false
 		}
 	}
 
@@ -231,22 +219,36 @@ func newLauncher(options Options) *launcher.Launcher {
 	return l
 }
 
-// checkHashUnique checks if the hash of the screenshot data is unique.
-func checkHashUnique(imageData []byte) (bool, error) {
-	hasher := sha256.New()
-	_, err := hasher.Write(imageData)
+func isDuplicate(rawURL string, image []byte) bool {
+
+	u, err := url.Parse(rawURL)
 	if err != nil {
-		return false, err
-	}
-	hashStr := hex.EncodeToString(hasher.Sum(nil))
-
-	_, exists := seenHashes[hashStr]
-	if exists {
-		return false, nil
+		log.Warnf("Error getting hostname for %s: %v", u, err)
+		return false
 	}
 
-	seenHashes[hashStr] = struct{}{}
-	return true, nil
+	// Generate a fuzzy hash of the response body
+	hash, _ := ssdeep.FuzzyBytes(image)
+
+	// Initialize the nested map if not already done
+	if fuzzyHashes[u.Host] == nil {
+		fuzzyHashes[u.Host] = make(map[string]bool)
+	}
+
+	// Check if the hash is similar to an existing hash
+	for existingHash := range fuzzyHashes[u.Host] {
+		score, _ := ssdeep.Distance(existingHash, hash)
+
+		// Threshold for considering content the same
+		if score < 96 {
+			log.Info("Skipping duplicate: ", rawURL)
+			return false
+		}
+	}
+
+	// If no similar hash exists, store the new hash and proceed
+	fuzzyHashes[u.Host][hash] = true
+	return true
 }
 
 // addURLtoImage adds text to the bottom of the image with padding and border.

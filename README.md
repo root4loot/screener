@@ -9,7 +9,7 @@ screener is a command-line interface (CLI) and Golang library for capturing scre
 - **Stream URLs**: Input URLs via standard input (STDIN) for real-time processing.
 - **Fixed Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
 - **Redirect Handling**: Customize redirect behavior to follow or ignore URL changes.
-- **Unique Screenshots**: Save only unique screenshots to avoid duplicates.
+- **Unique screenshots**: Option to avoid saving duplicate screenshots, useful for large-scale scanning.
 - **Concurrency**: Support for concurrent requests for faster processing.
 - **Certificate Error Handling**: Option to ignore SSL certificate errors for testing environments.
 - **HTTP/2 Control**: Disable HTTP/2 for compatibility with various server configurations.
@@ -133,6 +133,11 @@ You may also "stream" targets to screener, capturing screenshots as they are rec
 </p>
 
 **Note:** You can remove the URL from the image by using the `-wu` or `--without-url` flag when running the tool.
+
+## Tips
+
+- Use `-wu` or `--without-url` flag to remove the URL from the image.
+- Use `-su` or `--save-unique` flag to save only unique screenshots
 
 ## Library Example 📦
 
