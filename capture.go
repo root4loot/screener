@@ -22,6 +22,7 @@ import (
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/golang/freetype/truetype"
 	"github.com/root4loot/goutils/log"
+	"github.com/root4loot/goutils/urlutil"
 	"golang.org/x/image/font"
 )
 
@@ -101,6 +102,8 @@ func (r *Runner) worker(TargetURL string) Result {
 
 // processScreenshot handles taking, saving, and uniqueness checking of screenshots.
 func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
+	var err error
+
 	shouldSave := true
 	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
 	if err != nil {
@@ -108,11 +111,16 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	}
 	result.Image = screenshot
 
+	finalOrigin, err := urlutil.GetOrigin(result.LandingURL)
+	if err != nil {
+		return err
+	}
+
 	// Add text to image if required
 	if !r.Options.URLInImage {
-		result.Image, err = r.addURLtoImage(result.Image, result.LandingURL)
+		result.Image, err = r.addURLtoImage(result.Image, finalOrigin)
 		if err != nil {
-			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
+			log.Warnf("Error adding text to image for %s: %v", finalOrigin, err)
 			result.Error = err
 		}
 	}
@@ -134,7 +142,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			return err
 		}
-		log.Resultf("Screenshot for %s saved to %s", result.TargetURL, r.Options.SaveScreenshotsPath)
+		log.Resultf("Screenshot for %s saved to %s", finalOrigin, r.Options.SaveScreenshotsPath)
 	}
 	return nil
 }
