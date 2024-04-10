@@ -35,7 +35,7 @@ docker run -it -v "$(pwd)/screenshots:/app/screenshots" screener -t example.com
 ## Usage
 
 ```
-Usage: screener [options] (-t <target> | -i <targets.txt>)
+Usage: screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
    -t,  --target                   single target
@@ -58,11 +58,11 @@ CONFIGURATIONS:
    -s,   --silence                 silence output                                (Default: false)
 
 OUTPUT:
-   -o,   --outfolder             save images to given folder                   (Default: ./screenshots)
-   -nu,  --no-url                without URL in image                          (Default: true)
-   -s,   --silence               silence output
-   -v,   --verbose               verbose output
-         --version               display version
+   -o,   --outfolder               save images to given folder                   (Default: ./screenshots)
+   -nu,  --no-url                  without URL in image                          (Default: true)
+   -s,   --silence                 silence output
+   -v,   --verbose                 verbose output
+         --version                 display version
 ```
 
 ## Example
