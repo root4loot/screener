@@ -37,7 +37,7 @@ type Options struct {
 	DelayBetweenCapture     int            // Delay in seconds between captures for multiple targets
 	FollowRedirects         bool           // Follow redirects
 	CaptureFull             bool           // Whether to take a full page screenshot
-	URLInImage              bool           // Whether to include the URL in the image
+	ImprintURL              bool           // Whether to include the URL in the image
 	Silence                 bool           // Silence output
 	Verbose                 bool           // Verbose logging
 }
@@ -71,7 +71,7 @@ func DefaultOptions() *Options {
 		FixedWait:               2,
 		DelayBetweenCapture:     0,
 		FollowRedirects:         true,
-		URLInImage:              true,
+		ImprintURL:              true,
 		IgnoreStatusCodes:       []int64{},
 	}
 }

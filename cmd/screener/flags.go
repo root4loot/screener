@@ -24,7 +24,7 @@ func (c *CLI) usage() {
 
 	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d seconds)\n", "-to", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
+	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d seconds)\n", "-to", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %s)\n", "-ua", "--user-agent", "set user agent", "Chrome Headless")
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-su", "--save-unique", "save unique screenshots only", screener.DefaultOptions().SaveUnique)
 	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dh", "--disable-http2", "disable HTTP2", screener.DefaultOptions().DisableHTTP2)
@@ -40,7 +40,7 @@ func (c *CLI) usage() {
 
 	fmt.Fprintf(w, "\nOUTPUT:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\t\t\t\t\t    (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t %s\t\t\t\t\t    (Default: %v)\n", "-wu", "--without-url", "without URL in image", !screener.DefaultOptions().URLInImage)
+	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t %s\t\t\t\t\t    (Default: %v)\n", "-nu", "--no-url", "without URL in image", screener.DefaultOptions().ImprintURL)
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-s", "--silence", "silence output")
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t %s\n", "-v", "--verbose", "verbose output")
 	fmt.Fprintf(w, "\t%s    %s\t\t\t\t %s\n", "  ", "--version", "display version")
@@ -88,8 +88,8 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Options.CaptureFull, "cf", screener.DefaultOptions().CaptureFull, "")
 
 	// OUTPUT
-	flag.BoolVar(&c.Options.URLInImage, "without-url", !screener.DefaultOptions().URLInImage, "")
-	flag.BoolVar(&c.Options.URLInImage, "wu", !screener.DefaultOptions().URLInImage, "")
+	flag.BoolVar(&c.Options.ImprintURL, "without-url", !screener.DefaultOptions().ImprintURL, "")
+	flag.BoolVar(&c.Options.ImprintURL, "wu", !screener.DefaultOptions().ImprintURL, "")
 	flag.BoolVar(&c.Options.Silence, "s", false, "")
 	flag.BoolVar(&c.Options.Silence, "silence", false, "")
 	flag.BoolVar(&c.Options.Verbose, "v", false, "")

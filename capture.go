@@ -110,7 +110,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	result.Image = screenshot
 
 	// Add text to image if required
-	if !r.Options.URLInImage {
+	if r.Options.ImprintURL {
 		result.Image, err = r.addURLtoImage(result.Image, result.LandingURL)
 		if err != nil {
 			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)

@@ -43,7 +43,7 @@ INPUT:
 
 CONFIGURATIONS:
    -c,   --concurrency             number of concurrent requests                 (Default: 10)
-   -to,   --timeout                timeout for screenshot capture                (Default: 15 seconds)
+   -to,  --timeout                 timeout for screenshot capture                (Default: 15 seconds)
    -ua,  --user-agent              set user agent                                (Default: Chrome Headless)
    -su,  --save-unique             save unique screenshots only                  (Default: false)
    -dh,  --disable-http2           disable HTTP2                                 (Default: true)
@@ -58,11 +58,11 @@ CONFIGURATIONS:
    -s,   --silence                 silence output                                (Default: false)
 
 OUTPUT:
-   -o,   --outfolder               save images to given folder                   (Default: ./screenshots)
-   -wu,  --without-url             without URL in image                          (Default: false)
-   -s,   --silence                 silence output
-   -v,   --verbose                 verbose output
-         --version                 display version
+   -o,   --outfolder             save images to given folder                   (Default: ./screenshots)
+   -nu,  --no-url                without URL in image                          (Default: true)
+   -s,   --silence               silence output
+   -v,   --verbose               verbose output
+         --version               display version
 ```
 
 ## Example
@@ -132,11 +132,9 @@ You may also "stream" targets to screener, capturing screenshots as they are rec
 <img src="./assets/https_example.com.png" alt="screenshot example"/>
 </p>
 
-**Note:** You can remove the URL from the image by using the `-wu` or `--without-url` flag when running the tool.
-
 ## Tips
 
-- Use `-wu` or `--without-url` flag to remove the URL from the image.
+- Use `-nu` or `--no-url` flag to remove the URL from the image.
 - Use `-su` or `--save-unique` flag to save only unique screenshots
 
 ## Library Example 📦
