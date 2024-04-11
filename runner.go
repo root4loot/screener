@@ -163,8 +163,6 @@ func (r *Runner) capture(target string) Result {
 		time.Sleep(time.Duration(r.Options.DelayBetweenCapture) * time.Second)
 	}
 
-	log.Debugf("Capturing target: %s", target)
-
 	// Normalize target.
 	normalizedTarget, err := normalize(target)
 	if err != nil {
@@ -198,7 +196,7 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 
 		// If HTTPS fails, then try HTTP unless it's a redirect from HTTP to HTTPS.
 		if resultWithHTTPS.Error != nil {
-			log.Debugf("HTTPS failed for %s: Trying HTTP", target)
+			log.Infof("HTTPS failed for %s. Trying HTTP", target)
 			resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
 			if resultWithHTTP.Error == nil || !strings.HasPrefix(resultWithHTTP.LandingURL, "https://") {
 				return resultWithHTTP

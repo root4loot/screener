@@ -33,7 +33,7 @@ func Init() {
 var fuzzyHashes = make(map[string]map[string]bool) // Map of fuzzy hashes for duplicate detection
 
 func (r *Runner) worker(TargetURL string) Result {
-	log.Info("Preparing screenshot:", TargetURL)
+	log.Debugf("Running worker on %s", TargetURL)
 	result := Result{TargetURL: TargetURL}
 
 	// Create a context with a timeout
@@ -248,7 +248,7 @@ func isDuplicate(rawURL string, image []byte) bool {
 
 		// Threshold for considering content the same
 		if score < 96 {
-			log.Info("Skipping duplicate: ", rawURL)
+			log.Info("Skipping duplicate screenshot for", rawURL)
 			return false
 		}
 	}

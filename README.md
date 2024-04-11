@@ -9,7 +9,7 @@ screener is a command-line interface (CLI) and Golang library for capturing scre
 - **Stream URLs**: Input URLs via standard input (STDIN) for real-time processing.
 - **Fixed Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
 - **Redirect Handling**: Customize redirect behavior to follow or ignore URL changes.
-- **Unique screenshots**: Option to avoid saving duplicate screenshots, useful for large-scale scanning.
+- **Unique screenshots**: Uses fuzzy-hashing to prevent saving duplicate screenshots, useful for large-scale scanning.
 - **Concurrency**: Support for concurrent requests for faster processing.
 - **Certificate Error Handling**: Option to ignore SSL certificate errors for testing environments.
 - **HTTP/2 Control**: Disable HTTP/2 for compatibility with various server configurations.
@@ -72,7 +72,7 @@ OUTPUT:
 Capture a single target. If the scheme (http/https) is not specified, then it will default to https and fallback to http if the former fails.
 
 ```sh
-screener -t "example.com"
+$ screener -t "example.com"
 [screener] (INF) Preparing screenshot: https://example.com
 [screener] (RES) Successful screenshot: https://example.com/
 ```
@@ -83,6 +83,7 @@ Capture multiple targets.
 
 ```sh
 $ cat targets.txt
+142.250.74.110
 google.com
 bugcrowd.com
 hackerone.com/sitemap.xml
@@ -94,37 +95,47 @@ Note that targets can be IP, domain, or full URL.
 
 ```sh
 $ screener -l targets.txt
-[screener] (INF) Preparing screenshot: https://scanme.sh/
-[screener] (INF) Preparing screenshot: https://google.com
-[screener] (INF) Preparing screenshot: http://example.com/
-[screener] (INF) Preparing screenshot: https://bugcrowd.com
-[screener] (INF) Preparing screenshot: https://hackerone.com/sitemap.xml
-[screener] (INF) Preparing screenshot: http://172.64.151.42
-[screener] (RES) Successful screenshot: http://example.com/
-[screener] (RES) Successful screenshot: https://hackerone.com/sitemap.xml
-[screener] (RES) Successful screenshot: http://172.64.151.42/
-[screener] (RES) Successful screenshot: https://scanme.sh/
-[screener] (RES) Successful screenshot: https://www.google.com/
-[screener] (RES) Successful screenshot: https://www.bugcrowd.com
+[screener] (RES) Saved screenshot to screenshots/http_example.com.png
+[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_sitemap.xml.png
+[screener] (RES) Saved screenshot to screenshots/https_scanme.sh.png
+[screener] (RES) Saved screenshot to screenshots/https_142.250.74.110.png
+[screener] (RES) Saved screenshot to screenshots/https_google.com.png
+[screener] (RES) Saved screenshot to screenshots/https_bugcrowd.com.png
 ```
 
 You may also "stream" targets to screener, capturing screenshots as they are received:
 
 ```sh
-✗ cat targets.txt | screener
-[screener] (INF) Preparing screenshot: https://google.com
-[screener] (RES) Successful screenshot: https://www.google.com/
-[screener] (INF) Preparing screenshot: https://bugcrowd.com
-[screener] (RES) Successful screenshot: https://www.bugcrowd.com/
-[screener] (INF) Preparing screenshot: http://172.64.151.42
-[screener] (RES) Successful screenshot: http://172.64.151.42/
-[screener] (INF) Preparing screenshot: https://hackerone.com/sitemap.xml
-[screener] (RES) Successful screenshot: https://hackerone.com/sitemap.xml
-[screener] (INF) Preparing screenshot: http://example.com/
-[screener] (RES) Successful screenshot: http://example.com/
-[screener] (INF) Preparing screenshot: https://scanme.sh/
-[screener] (RES) Successful screenshot: https://scanme.sh/
+$ cat targets.txt | screener
+[screener] (RES) Saved screenshot to screenshots/https_142.250.74.110.png
+[screener] (RES) Saved screenshot to screenshots/https_google.com.png
+[screener] (RES) Saved screenshot to screenshots/https_bugcrowd.com.png
+[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_sitemap.xml.png
+[screener] (RES) Saved screenshot to screenshots/http_example.com.png
+[screener] (RES) Saved screenshot to screenshots/https_scanme.sh.png
 ```
+
+When dealing with many same-site URLs, use the `-su` or `--save-unique` flags to avoid saving multiple copies of the same screenshot. This makes it easier to sort through your screenshots!
+In the following example, we're using [recrawl](https://github.com/root4loot/recrawl) to crawl a target site and pipe its results to screener with the `--save-unique` flag set. For more information, see [recrawl](https://github.com/root4loot/recrawl).
+
+```sh
+$ recrawl --target "hackerone.com" --hide-status --hide-media | screener --save-unique
+[recrawl] (INF) Hiding status codes: true
+[recrawl] (INF) Hiding media: [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
+[recrawl] (INF) Notice: Output is being piped. 'Result' logs will be formatted accordingly.
+[recrawl] (INF) Crawling target: https://hackerone.com
+
+[screener] (INF) Skipping duplicate screenshot for https://hackerone.com/robots.txt
+[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_robots.txt.png
+[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/node/12420/
+[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_node_12420.png
+[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/product/challenge/
+[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_product_challenge.png
+[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/node/9916/
+[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_node_9916.png
+...
+```
+
 
 ## Example Screenshot
 
@@ -133,9 +144,10 @@ You may also "stream" targets to screener, capturing screenshots as they are rec
 </p>
 
 ## Tips
-
 - Use `-nu` or `--no-url` flag to remove the URL from the image.
-- Use `-su` or `--save-unique` flag to save only unique screenshots
+- Use `-su` or `--save-unique` flag to save only screenshots that are unique.
+-  macOS users can quickly access websites from screenshots: Press `Space` to preview an image, then mouse over the URL imprinted at the bottom. You can often click the link directly with `Command` + `Click`. If this method doesn't work, open the image in the Preview app to click the URL.
+
 
 ## Library Example 📦
 
