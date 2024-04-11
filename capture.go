@@ -103,7 +103,6 @@ func (r *Runner) worker(TargetURL string) Result {
 func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	var err error
 
-	shouldSave := true
 	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
 	if err != nil {
 		return err
@@ -125,18 +124,20 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	}
 
 	// Save screenshot if required
-	if r.Options.SaveScreenshots && shouldSave {
-		_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
-		if err != nil {
-			return err
+	if r.Options.SaveScreenshots {
+		if r.Options.SaveUnique && isDuplicate(result.TargetURL, result.Image) {
+			return nil // Skip saving if the screenshot is a duplicate
+		} else {
+			_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
+			if err != nil {
+				return err
+			}
 		}
-		log.Resultf("Successful screenshot: %s", origin)
 	}
 	return nil
 }
 
 func (result Result) WriteToFolder(writeFolderPath string) (filename string, err error) {
-	// Check if the screenshot data is empty.
 	if len(result.Image) == 0 {
 		return "", nil // Skip saving if data is empty.
 	}
@@ -180,12 +181,10 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 	filename = strings.TrimSuffix(filename, "/")
 	filename = strings.ReplaceAll(filename, "/", "_")
 	filename = strings.ReplaceAll(filename, ":", "-")
-
-	// Create a filename that includes the scheme, host, and port.
-	fileName := filepath.Join(writeFolderPath, filename+".png")
+	filename = filepath.Join(writeFolderPath, filename+".png")
 
 	// Open the file for writing. Ensure the filename is in lower case.
-	file, err := os.Create(strings.ToLower(fileName))
+	file, err := os.Create(strings.ToLower(filename))
 	if err != nil {
 		return "", err
 	}
@@ -193,11 +192,13 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 
 	// Write the screenshot data to the file.
 	_, err = file.Write(result.Image)
-	if err != nil {
+	if err == nil {
+		log.Resultf("Saved screenshot to %s", filename)
+	} else {
 		return "", err
 	}
 
-	return fileName, nil
+	return filename, nil
 }
 
 // newLauncher creates a new browser launcher with the specified options.
