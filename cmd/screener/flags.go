@@ -88,8 +88,8 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Options.CaptureFull, "cf", screener.DefaultOptions().CaptureFull, "")
 
 	// OUTPUT
-	flag.BoolVar(&c.Options.ImprintURL, "no-url", !screener.DefaultOptions().ImprintURL, "")
-	flag.BoolVar(&c.Options.ImprintURL, "nu", !screener.DefaultOptions().ImprintURL, "")
+	flag.BoolVar(&c.Options.ImprintURL, "no-url", screener.DefaultOptions().ImprintURL, "")
+	flag.BoolVar(&c.Options.ImprintURL, "nu", screener.DefaultOptions().ImprintURL, "")
 	flag.BoolVar(&c.Options.Silence, "s", false, "")
 	flag.BoolVar(&c.Options.Silence, "silence", false, "")
 	flag.BoolVar(&c.Options.Verbose, "v", false, "")
