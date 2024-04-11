@@ -21,6 +21,7 @@ import (
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/golang/freetype/truetype"
 	"github.com/root4loot/goutils/log"
+	"github.com/root4loot/goutils/urlutil"
 	"golang.org/x/image/font"
 )
 
@@ -109,11 +110,16 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 	}
 	result.Image = screenshot
 
+	origin, err := urlutil.GetOrigin(result.TargetURL)
+	if err != nil {
+		return err
+	}
+
 	// Add text to image if required
 	if r.Options.ImprintURL {
-		result.Image, err = r.addURLtoImage(result.Image, result.LandingURL)
+		result.Image, err = r.addURLtoImage(result.Image, origin)
 		if err != nil {
-			log.Warnf("Error adding text to image for %s: %v", result.LandingURL, err)
+			log.Warnf("Error adding text to image for %s: %v", origin, err)
 			result.Error = err
 		}
 	}
@@ -124,7 +130,7 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 		if err != nil {
 			return err
 		}
-		log.Resultf("Successful screenshot: %s", result.LandingURL)
+		log.Resultf("Successful screenshot: %s", origin)
 	}
 	return nil
 }
