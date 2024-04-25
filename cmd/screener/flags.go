@@ -40,7 +40,7 @@ func (c *CLI) usage() {
 
 	fmt.Fprintf(w, "\nOUTPUT:\n")
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\t\t\t\t\t    (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t   %s\t\t\t\t\t    (Default: %v)\n", "-nu", "--no-url", "without URL in image", screener.DefaultOptions().ImprintURL)
+	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t   %s\t\t\t\t\t    (Default: %v)\n", "-nu", "--no-url", "do not imprint URL in image", !screener.DefaultOptions().ImprintURL)
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-s", "--silence", "silence output")
 	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-v", "--verbose", "verbose output")
 	fmt.Fprintf(w, "\t%s    %s\t\t\t\t\t%s\n", "  ", "--version", "display version")
