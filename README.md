@@ -1,9 +1,9 @@
 <p align="center">
-<img src="./assets/logo.png" alt="screener logo" width="300"/>
+<img src="./assets/logo.png" alt="screener logo" width="250"/>
 </p>
 
 <div align="center">
-screener is a command-line interface (CLI) and Golang library for capturing screenshots of web pages. Uses <a href="[url](https://github.com/go-rod/rod)">Rod</a> for headless browsing.
+A tool used for capturing screenshots of web pages. Uses <a href="https://github.com/go-rod/rod">Rod</a> for headless browsing.
 </div>
 
 ## Features
