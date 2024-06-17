@@ -4,50 +4,95 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"text/tabwriter"
+	"text/template"
 
 	screener "github.com/root4loot/screener"
 )
 
-func (c *CLI) banner() {
-	fmt.Println("\nscreener", screener.Version, "by", author, "\n")
+type usageData struct {
+	AppName                    string
+	DefaultConcurrency         int
+	DefaultTimeout             int
+	DefaultUserAgent           string
+	DefaultSaveUnique          bool
+	DefaultDisableHTTP2        bool
+	DefaultFollowRedirects     bool
+	DefaultCaptureWidth        int
+	DefaultCaptureHeight       int
+	DefaultCaptureFull         bool
+	DefaultFixedWait           int
+	DefaultDelayBetweenCapture int
+	DefaultIgnoreCertErr       bool
+	DefaultIgnoreStatusCodes   bool
+	DefaultSilence             bool
+	DefaultOutFolder           string
+	DefaultNoURL               bool
 }
 
 func (c *CLI) usage() {
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	options := screener.DefaultOptions()
+	data := usageData{
+		AppName:                    os.Args[0],
+		DefaultConcurrency:         options.Concurrency,
+		DefaultTimeout:             options.Timeout,
+		DefaultUserAgent:           "Chrome Headless",
+		DefaultSaveUnique:          options.SaveUnique,
+		DefaultDisableHTTP2:        options.DisableHTTP2,
+		DefaultFollowRedirects:     options.FollowRedirects,
+		DefaultCaptureWidth:        options.CaptureWidth,
+		DefaultCaptureHeight:       options.CaptureHeight,
+		DefaultCaptureFull:         options.CaptureFull,
+		DefaultFixedWait:           options.FixedWait,
+		DefaultDelayBetweenCapture: options.DelayBetweenCapture,
+		DefaultIgnoreCertErr:       options.IgnoreCertificateErrors,
+		DefaultIgnoreStatusCodes:   len(options.IgnoreStatusCodes) > 0,
+		DefaultSilence:             options.Silence,
+		DefaultOutFolder:           options.SaveScreenshotsPath,
+		DefaultNoURL:               !options.ImprintURL,
+	}
 
-	fmt.Fprintf(w, "Usage:\t%s [options] (-u <target> | -l <targets.txt>)\n", os.Args[0])
+	tmpl, err := template.New("usage").Parse(usageTemplate)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Fprintf(w, "\nINPUT:\n")
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t       %s\n", "-t", "--target", "single target")
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t         %s\n", "-l", "--list", " input file containing list of targets (one per line)")
-
-	fmt.Fprintf(w, "\nCONFIGURATIONS:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %d)\n", "-c", "--concurrency", "number of concurrent requests", screener.DefaultOptions().Concurrency)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d seconds)\n", "-to", "--timeout", "timeout for screenshot capture", screener.DefaultOptions().Timeout)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %s)\n", "-ua", "--user-agent", "set user agent", "Chrome Headless")
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-su", "--save-unique", "save unique screenshots only", screener.DefaultOptions().SaveUnique)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dh", "--disable-http2", "disable HTTP2", screener.DefaultOptions().DisableHTTP2)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-fr", "--follow-redirects", "follow redirects", screener.DefaultOptions().FollowRedirects)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-cw", "--capture-width", "screenshot pixel width", screener.DefaultOptions().CaptureWidth)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-ch", "--capture-height", "screenshot pixel height", screener.DefaultOptions().CaptureHeight)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %d)\n", "-cf", "--capture-full", "capture full page", screener.DefaultOptions().CaptureHeight)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-fw", "--fixed-wait", "fixed wait time before capturing (seconds)", screener.DefaultOptions().FixedWait)
-	fmt.Fprintf(w, "\t%s,  %s\t%s\t(Default: %v)\n", "-dc", "--delay-between-capture", "delay between capture (seconds)", screener.DefaultOptions().DelayBetweenCapture)
-	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-ice", "--ignore-cert-err", "ignore certificate errors", screener.DefaultOptions().IgnoreCertificateErrors)
-	fmt.Fprintf(w, "\t%s, %s\t%s\t(Default: %v)\n", "-isc", "--ignore-status-codes", "ignore HTTP status codes  (comma separated)", screener.DefaultOptions().IgnoreStatusCodes)
-	fmt.Fprintf(w, "\t%s,   %s\t%s\t(Default: %v)\n", "-s", "--silence", "silence output", screener.DefaultOptions().Silence)
-
-	fmt.Fprintf(w, "\nOUTPUT:\n")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\t\t\t\t\t    (Default: %s)\n", "-o", "--outfolder", "save images to given folder", screener.DefaultOptions().SaveScreenshotsPath)
-	fmt.Fprintf(w, "\t%s,  %s\t\t\t\t   %s\t\t\t\t\t    (Default: %v)\n", "-nu", "--no-url", "do not imprint URL in image", !screener.DefaultOptions().ImprintURL)
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-s", "--silence", "silence output")
-	fmt.Fprintf(w, "\t%s,   %s\t\t\t\t   %s\n", "-v", "--verbose", "verbose output")
-	fmt.Fprintf(w, "\t%s    %s\t\t\t\t\t%s\n", "  ", "--version", "display version")
-
-	w.Flush()
-	fmt.Println("")
+	err = tmpl.Execute(os.Stdout, data)
+	if err != nil {
+		panic(err)
+	}
 }
+
+const usageTemplate = `
+Usage:
+  {{.AppName}} [options] (-u <target> | -l <targets.txt>)
+
+INPUT:
+  -t, --target                   single target
+  -l, --list                     input file containing list of targets (one per line)
+ 
+CONFIGURATIONS:
+  -c, --concurrency              number of concurrent requests               (Default: {{.DefaultConcurrency}})
+  -to, --timeout                 timeout for screenshot capture              (Default: {{.DefaultTimeout}} seconds)
+  -ua, --user-agent              set user agent                              (Default: {{.DefaultUserAgent}})
+  -su, --save-unique             save unique screenshots only                (Default: {{.DefaultSaveUnique}})
+  -dh, --disable-http2           disable HTTP2                               (Default: {{.DefaultDisableHTTP2}})
+  -fr, --follow-redirects        follow redirects                            (Default: {{.DefaultFollowRedirects}})
+  -cw, --capture-width           screenshot pixel width                      (Default: {{.DefaultCaptureWidth}})
+  -ch, --capture-height          screenshot pixel height                     (Default: {{.DefaultCaptureHeight}})
+  -cf, --capture-full            capture full page                           (Default: {{.DefaultCaptureFull}})
+  -fw, --fixed-wait              fixed wait time before capturing (seconds)  (Default: {{.DefaultFixedWait}})
+  -dc, --delay-between-capture   delay between capture (seconds)             (Default: {{.DefaultDelayBetweenCapture}})
+  -ice, --ignore-cert-err        ignore certificate errors                   (Default: {{.DefaultIgnoreCertErr}})
+  -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: {{.DefaultIgnoreStatusCodes}})
+  -s, --silence                  silence output                              (Default: {{.DefaultSilence}})
+
+OUTPUT:
+  -o, --outfolder                save images to given folder                 (Default: {{.DefaultOutFolder}})
+  -nu, --no-url                  do not imprint URL in image                 (Default: {{.DefaultNoURL}})
+  -s, --silence                  silence output
+  -v, --verbose                  verbose output
+       --version                 display version
+`
 
 // parseAndSetOptions parses the command line options and sets the options
 func (c *CLI) parseFlags() {
@@ -103,4 +148,8 @@ func (c *CLI) parseFlags() {
 		c.usage()
 	}
 	flag.Parse()
+}
+
+func (c *CLI) banner() {
+	fmt.Println("\nscreener", screener.Version, "by", author, "\n")
 }
