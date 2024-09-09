@@ -1,27 +1,11 @@
-# Contributing to screener
+# Contributing Guidelines
 
-Thanks for considering a contribution! Here's how you can help:
+Thank you for considering contributing to this project.
 
-## Reporting Bugs
+## How to Contribute
 
-1. Check existing [Issues](https://github.com/root4loot/screener/issues) to avoid duplicates.
-2. File a new issue if your bug hasn't been reported.
-
-## Suggesting Features
-
-1. Check [Issues](https://github.com/root4loot/screener/issues) for similar suggestions.
-2. Open a new issue for your feature request.
-
-## Pull Requests
-
-1. Fork the repo and create a new branch.
-2. Make your changes and open a pull request.
-
-## Code Style
-
-* Keep it simple and clear.
-* Follow standard Go coding practices.
-
-## License
-
-Contributions will fall under screener's existing MIT license.
+1. **Fork the Repository**: Fork the repository to your GitHub account.
+3. **Make Changes**: Implement your changes in the codebase.
+4. **Commit Changes**: Commit your changes with a clear and concise commit message.
+5. **Push to GitHub**: Push your changes to your forked repository.
+6. **Create a Pull Request**: Go to the original repository on GitHub and create a pull request from your branch.
