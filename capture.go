@@ -82,27 +82,19 @@ func (r *Runner) captureTarget(TargetURL string) Result {
 
 	result.LandingURL = page.MustInfo().URL
 
-	if err := processScreenshot(page, &result, r); err != nil {
-		log.Warnf("Error processing screenshot for %s: %v", TargetURL, err)
-		result.Error = err
-		return result
-	}
-
-	return result
-}
-
-func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
-	var err error
-
 	screenshot, err := page.Screenshot(r.Options.CaptureFull, nil)
 	if err != nil {
-		return err
+		log.Warnf("Error capturing screenshot for %s: %v", TargetURL, err)
+		result.Error = err
+		return result
 	}
 	result.Image = screenshot
 
 	origin, err := urlutil.GetOrigin(result.TargetURL)
 	if err != nil {
-		return err
+		log.Warnf("Error getting origin for %s: %v", TargetURL, err)
+		result.Error = err
+		return result
 	}
 
 	if r.Options.ImprintURL {
@@ -115,15 +107,17 @@ func processScreenshot(page *rod.Page, result *Result, r *Runner) error {
 
 	if r.Options.SaveScreenshots {
 		if r.Options.SaveUnique && isDuplicate(result.TargetURL, result.Image) {
-			return nil
+			return result
 		} else {
 			_, err := result.WriteToFolder(r.Options.SaveScreenshotsPath)
 			if err != nil {
-				return err
+				log.Warnf("Error saving screenshot for %s: %v", TargetURL, err)
+				result.Error = err
 			}
 		}
 	}
-	return nil
+
+	return result
 }
 
 func (result Result) WriteToFolder(writeFolderPath string) (filename string, err error) {
