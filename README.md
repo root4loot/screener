@@ -29,9 +29,9 @@ go install github.com/root4loot/screener/cmd/screener@latest
 ### Docker
 
 ```
-git clone https://github.com/root4loot/screener.git && cd screener
-docker build -t screener .
-docker run -it -v "$(pwd)/screenshots:/app/screenshots" screener -t example.com
+git clone https://github.com/root4loot/screener.git
+cd screener
+docker run --rm -it $(docker build -q .) -t example.com
 ```
 
 ## Usage
