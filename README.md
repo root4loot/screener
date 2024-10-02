@@ -40,31 +40,32 @@ docker run --rm -it $(docker build -q .) -t example.com
 Usage: screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
-   -t,  --target                   single target
-   -l,  --list                     input file containing list of targets (one per line)
+  -t, --target                   single target
+  -l, --list                     input file containing list of targets (one per line)
 
 CONFIGURATIONS:
-   -c,   --concurrency             number of concurrent requests                 (Default: 10)
-   -to,  --timeout                 timeout for screenshot capture                (Default: 15 seconds)
-   -ua,  --user-agent              set user agent                                (Default: Chrome Headless)
-   -su,  --save-unique             save unique screenshots only                  (Default: false)
-   -dh,  --disable-http2           disable HTTP2                                 (Default: true)
-   -fr,  --follow-redirects        follow redirects                              (Default: true)
-   -cw,  --capture-width           screenshot pixel width                        (Default: 1366)
-   -ch,  --capture-height          screenshot pixel height                       (Default: 768)
-   -cf,  --capture-full            capture full page                             (Default: 768)
-   -fw,  --fixed-wait              fixed wait time before capturing (seconds)    (Default: 2)
-   -dc,  --delay-between-capture   delay between capture (seconds)               (Default: 0)
-   -ice, --ignore-cert-err         ignore certificate errors                     (Default: true)
-   -isc, --ignore-status-codes     ignore HTTP status codes  (comma separated)   (Default: [])
-   -s,   --silence                 silence output                                (Default: false)
+  -c,   --concurrency            number of concurrent requests               (Default: 10)
+  -to,  --timeout                timeout for screenshot capture              (Default: 15 seconds)
+  -ua,  --user-agent             set user agent                              (Default: Chrome Headless)
+  -su,  --save-unique            save unique screenshots only                (Default: false)
+  -dh,  --use-http2              use HTTP2                                   (Default: false)
+  -fr,  --follow-redirects       follow redirects                            (Default: true)
+  -cw,  --capture-width          screenshot pixel width                      (Default: 1366)
+  -ch,  --capture-height         screenshot pixel height                     (Default: 768)
+  -cf,  --capture-full           capture full page                           (Default: false)
+  -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: 2)
+  -dc,  --delay-between-capture  delay between capture (seconds)             (Default: 0)
+  -ice, --ignore-cert-err        ignore certificate errors                   (Default: true)
+  -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: false)
+  -s,   --silence                silence output                              (Default: false)
 
 OUTPUT:
-   -o,   --outfolder               save images to given folder                   (Default: ./screenshots)
-   -nu,  --no-url                  do not imprint URL in image                   (Default: false)
-   -s,   --silence                 silence output
-   -v,   --verbose                 verbose output
-         --version                 display version
+  -o,   --outfolder              save images to given folder                 (Default: ./screenshots)
+  -nu,  --no-url                 do not imprint URL in image                 (Default: false)
+  -s,   --silence                silence output
+  -v,   --verbose                verbose output
+        --version                display version
+
 ```
 
 ## Example
@@ -138,7 +139,6 @@ $ recrawl --target "hackerone.com" --hide-status --hide-media | screener --save-
 ...
 ```
 
-
 ## Example Screenshot
 
 <p align="center">
@@ -146,10 +146,10 @@ $ recrawl --target "hackerone.com" --hide-status --hide-media | screener --save-
 </p>
 
 ## Tips
+
 - Use `-nu` or `--no-url` flag to remove the URL from the image.
 - Use `-su` or `--save-unique` flag to save only screenshots that are unique.
--  macOS users can quickly access websites from screenshots: Press `Space` to preview an image, then mouse over the URL imprinted at the bottom. You can often click the link directly with `Command` + `Click`. If this method doesn't work, open the image in the Preview app to click the URL.
-
+- macOS users can quickly access websites from screenshots: Press `Space` to preview an image, then mouse over the URL imprinted at the bottom. You can often click the link directly with `Command` + `Click`. If this method doesn't work, open the image in the Preview app to click the URL.
 
 ## Library Example 📦
 

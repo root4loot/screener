@@ -27,7 +27,7 @@ func main() {
 		SaveScreenshots:         true,
 		MaxWait:                 30,
 		FollowRedirects:         true,
-		DisableHTTP2:            true,
+		UseHTTP2:                true,
 		IgnoreCertificateErrors: true,
 		Verbose:                 false,
 		Silence:                 true,

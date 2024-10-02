@@ -198,7 +198,7 @@ func newLauncher(options Options) *launcher.Launcher {
 		l.Set("ignore-certificate-errors", "true")
 	}
 
-	if options.DisableHTTP2 {
+	if !options.UseHTTP2 {
 		l.Set("disable-http2", "true")
 	}
 

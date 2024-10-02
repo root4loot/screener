@@ -37,7 +37,7 @@ func (c *CLI) usage() {
 		DefaultTimeout:             options.Timeout,
 		DefaultUserAgent:           "Chrome Headless",
 		DefaultSaveUnique:          options.SaveUnique,
-		DefaultDisableHTTP2:        options.DisableHTTP2,
+		DefaultDisableHTTP2:        options.UseHTTP2,
 		DefaultFollowRedirects:     options.FollowRedirects,
 		DefaultCaptureWidth:        options.CaptureWidth,
 		DefaultCaptureHeight:       options.CaptureHeight,
@@ -71,27 +71,27 @@ INPUT:
   -l, --list                     input file containing list of targets (one per line)
  
 CONFIGURATIONS:
-  -c, --concurrency              number of concurrent requests               (Default: {{.DefaultConcurrency}})
-  -to, --timeout                 timeout for screenshot capture              (Default: {{.DefaultTimeout}} seconds)
-  -ua, --user-agent              set user agent                              (Default: {{.DefaultUserAgent}})
-  -su, --save-unique             save unique screenshots only                (Default: {{.DefaultSaveUnique}})
-  -dh, --disable-http2           disable HTTP2                               (Default: {{.DefaultDisableHTTP2}})
-  -fr, --follow-redirects        follow redirects                            (Default: {{.DefaultFollowRedirects}})
-  -cw, --capture-width           screenshot pixel width                      (Default: {{.DefaultCaptureWidth}})
-  -ch, --capture-height          screenshot pixel height                     (Default: {{.DefaultCaptureHeight}})
-  -cf, --capture-full            capture full page                           (Default: {{.DefaultCaptureFull}})
-  -fw, --fixed-wait              fixed wait time before capturing (seconds)  (Default: {{.DefaultFixedWait}})
-  -dc, --delay-between-capture   delay between capture (seconds)             (Default: {{.DefaultDelayBetweenCapture}})
+  -c,   --concurrency            number of concurrent requests               (Default: {{.DefaultConcurrency}})
+  -to,  --timeout                timeout for screenshot capture              (Default: {{.DefaultTimeout}} seconds)
+  -ua,  --user-agent             set user agent                              (Default: {{.DefaultUserAgent}})
+  -su,  --save-unique            save unique screenshots only                (Default: {{.DefaultSaveUnique}})
+  -dh,  --use-http2              use HTTP2                                   (Default: {{.DefaultDisableHTTP2}})
+  -fr,  --follow-redirects       follow redirects                            (Default: {{.DefaultFollowRedirects}})
+  -cw,  --capture-width          screenshot pixel width                      (Default: {{.DefaultCaptureWidth}})
+  -ch,  --capture-height         screenshot pixel height                     (Default: {{.DefaultCaptureHeight}})
+  -cf,  --capture-full           capture full page                           (Default: {{.DefaultCaptureFull}})
+  -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: {{.DefaultFixedWait}})
+  -dc,  --delay-between-capture  delay between capture (seconds)             (Default: {{.DefaultDelayBetweenCapture}})
   -ice, --ignore-cert-err        ignore certificate errors                   (Default: {{.DefaultIgnoreCertErr}})
   -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: {{.DefaultIgnoreStatusCodes}})
-  -s, --silence                  silence output                              (Default: {{.DefaultSilence}})
+  -s,   --silence                silence output                              (Default: {{.DefaultSilence}})
 
 OUTPUT:
-  -o, --outfolder                save images to given folder                 (Default: {{.DefaultOutFolder}})
-  -nu, --no-url                  do not imprint URL in image                 (Default: {{.DefaultNoURL}})
-  -s, --silence                  silence output
-  -v, --verbose                  verbose output
-       --version                 display version
+  -o,   --outfolder              save images to given folder                 (Default: {{.DefaultOutFolder}})
+  -nu,  --no-url                 do not imprint URL in image                 (Default: {{.DefaultNoURL}})
+  -s,   --silence                silence output
+  -v,   --verbose                verbose output
+        --version                display version
 `
 
 // parseAndSetOptions parses the command line options and sets the options
@@ -109,8 +109,8 @@ func (c *CLI) parseFlags() {
 	flag.IntVar(&c.Options.CaptureHeight, "ch", screener.DefaultOptions().CaptureHeight, "")
 	flag.IntVar(&c.Options.CaptureWidth, "capture-width", screener.DefaultOptions().CaptureWidth, "")
 	flag.IntVar(&c.Options.CaptureWidth, "cw", screener.DefaultOptions().CaptureWidth, "")
-	flag.BoolVar(&c.Options.DisableHTTP2, "disable-http2", screener.DefaultOptions().DisableHTTP2, "")
-	flag.BoolVar(&c.Options.DisableHTTP2, "dh", screener.DefaultOptions().DisableHTTP2, "")
+	flag.BoolVar(&c.Options.UseHTTP2, "use-http2", screener.DefaultOptions().UseHTTP2, "")
+	flag.BoolVar(&c.Options.UseHTTP2, "uh", screener.DefaultOptions().UseHTTP2, "")
 	flag.BoolVar(&c.Options.FollowRedirects, "follow-redirects", screener.DefaultOptions().FollowRedirects, "")
 	flag.BoolVar(&c.Options.FollowRedirects, "fr", screener.DefaultOptions().FollowRedirects, "")
 	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ignore-cert-err", screener.DefaultOptions().IgnoreCertificateErrors, "")

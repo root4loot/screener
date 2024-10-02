@@ -24,7 +24,7 @@ type Options struct {
 	CaptureWidth            int          // width of the capture
 	Timeout                 int          // Timeout for each capture (seconds)
 	IgnoreCertificateErrors bool         // Ignore certificate errors
-	DisableHTTP2            bool         // Disable HTTP2
+	UseHTTP2                bool         // Use HTTP2
 	SaveScreenshots         bool         // Save screenshot to file
 	SaveScreenshotsPath     string       // Path to save screenshots
 	SaveUnique              bool         // Save unique screenshots only
@@ -62,7 +62,7 @@ func DefaultOptions() *Options {
 		CaptureHeight:           768,
 		IgnoreCertificateErrors: true,
 		SaveUnique:              false,
-		DisableHTTP2:            true,
+		UseHTTP2:                false,
 		SaveScreenshots:         false,
 		SaveScreenshotsPath:     "./screenshots",
 		CaptureFull:             false,
@@ -207,7 +207,7 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 		customFlags = append(customFlags, chromedp.Flag("ignore-certificate-errors", true))
 	}
 
-	if r.Options.DisableHTTP2 {
+	if !r.Options.UseHTTP2 {
 		customFlags = append(customFlags, chromedp.Flag("disable-http2", true))
 	}
 
