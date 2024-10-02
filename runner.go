@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/root4loot/goscope"
 	"github.com/root4loot/goutils/log"
 	"github.com/root4loot/goutils/urlutil"
+	"github.com/root4loot/scope"
 )
 
 type Runner struct {
@@ -19,26 +19,26 @@ type Runner struct {
 }
 
 type Options struct {
-	Concurrency             int            // number of concurrent requests
-	CaptureHeight           int            // height of the capture
-	CaptureWidth            int            // width of the capture
-	Timeout                 int            // Timeout for each capture (seconds)
-	IgnoreCertificateErrors bool           // Ignore certificate errors
-	DisableHTTP2            bool           // Disable HTTP2
-	SaveScreenshots         bool           // Save screenshot to file
-	SaveScreenshotsPath     string         // Path to save screenshots
-	SaveUnique              bool           // Save unique screenshots only
-	Scope                   *goscope.Scope // Scope to use
-	UserAgent               string         // User agent to use
-	MaxWait                 int            // Max wait time in seconds before taking screenshot, regardless of page load completion
-	FixedWait               int            // Fixed wait time in seconds before taking screenshot, regardless of page load completion
-	IgnoreStatusCodes       []int64        // List of status codes to ignore
-	DelayBetweenCapture     int            // Delay in seconds between captures for multiple targets
-	FollowRedirects         bool           // Follow redirects
-	CaptureFull             bool           // Whether to take a full page screenshot
-	ImprintURL              bool           // Whether to include the URL in the image
-	Silence                 bool           // Silence output
-	Verbose                 bool           // Verbose logging
+	Concurrency             int          // number of concurrent requests
+	CaptureHeight           int          // height of the capture
+	CaptureWidth            int          // width of the capture
+	Timeout                 int          // Timeout for each capture (seconds)
+	IgnoreCertificateErrors bool         // Ignore certificate errors
+	DisableHTTP2            bool         // Disable HTTP2
+	SaveScreenshots         bool         // Save screenshot to file
+	SaveScreenshotsPath     string       // Path to save screenshots
+	SaveUnique              bool         // Save unique screenshots only
+	Scope                   *scope.Scope // Scope to use
+	UserAgent               string       // User agent to use
+	MaxWait                 int          // Max wait time in seconds before taking screenshot, regardless of page load completion
+	FixedWait               int          // Fixed wait time in seconds before taking screenshot, regardless of page load completion
+	IgnoreStatusCodes       []int64      // List of status codes to ignore
+	DelayBetweenCapture     int          // Delay in seconds between captures for multiple targets
+	FollowRedirects         bool         // Follow redirects
+	CaptureFull             bool         // Whether to take a full page screenshot
+	ImprintURL              bool         // Whether to include the URL in the image
+	Silence                 bool         // Silence output
+	Verbose                 bool         // Verbose logging
 }
 
 type Result struct {
@@ -78,7 +78,7 @@ func DefaultOptions() *Options {
 // NewRunner returns a new runner
 func NewRunner() *Runner {
 	options := DefaultOptions()
-	newScope := goscope.NewScope()
+	newScope := scope.NewScope()
 	options.Scope = newScope
 
 	return &Runner{
@@ -92,7 +92,7 @@ func NewRunnerWithOptions(options Options) *Runner {
 	SetLogLevel(&options)
 
 	if options.Scope == nil {
-		newScope := goscope.NewScope()
+		newScope := scope.NewScope()
 		options.Scope = newScope
 	}
 
@@ -151,7 +151,6 @@ func (r *Runner) runWorker(url string) Result {
 }
 
 func (r *Runner) capture(target string) Result {
-
 	if r.Options.DelayBetweenCapture > 0 {
 		time.Sleep(time.Duration(r.Options.DelayBetweenCapture) * time.Second)
 	}
@@ -162,14 +161,14 @@ func (r *Runner) capture(target string) Result {
 		return Result{Error: err}
 	}
 
-	normalizedTarget, _ = urlutil.EnsureTrailingSlash(normalizedTarget)
+	normalizedTarget = urlutil.EnsureTrailingSlash(normalizedTarget)
 
 	r.mutex.Lock()
-	r.Options.Scope.AddTargetToScope(target)
+	r.Options.Scope.AddInclude(target)
 	r.mutex.Unlock()
 
-	if r.isVisited(normalizedTarget) || r.Options.Scope.IsTargetExcluded(normalizedTarget) {
-		log.Debugf("Target skipped (already visited or excluded): %s", normalizedTarget)
+	if r.isVisited(normalizedTarget) || !r.Options.Scope.IsInScope(normalizedTarget) {
+		log.Debugf("Target skipped (already visited or not in scope): %s", normalizedTarget)
 		return Result{}
 	}
 

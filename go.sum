@@ -37,6 +37,10 @@ github.com/root4loot/goscope v0.0.0-20231124190357-df9f3447c461 h1:h3ggVp5sgepiC
 github.com/root4loot/goscope v0.0.0-20231124190357-df9f3447c461/go.mod h1:+lH9u5tgGBzWoRUVy7enGx7V5iHukKFqNGptY9HRjAo=
 github.com/root4loot/goutils v0.0.0-20240410180004-65b39fb45654 h1:xxJ5kxCUO0INRnA4raWLGhTZTXBFxF0i6RG0i+y1KXA=
 github.com/root4loot/goutils v0.0.0-20240410180004-65b39fb45654/go.mod h1:QpKgqgwXZMtvOIG+dnZm3Gu7jvgPNEBVb4T+f1uPmac=
+github.com/root4loot/goutils v0.0.0-20241001082813-799fb4f452c1 h1:CZO8axBguxktTElMJwM9rHc7TUg0lh35kdb3hoA1fmE=
+github.com/root4loot/goutils v0.0.0-20241001082813-799fb4f452c1/go.mod h1:PDY2j4kbvwpRIO8QqpBRyIEywBc8qhFPXCcyzsK7Y5w=
+github.com/root4loot/scope v0.0.0-20241001095052-f7bf22cbd9c4 h1:jpRJA8gACkCYkIbm6uU1ipxlCC+NxrmAnGfbNafR5hU=
+github.com/root4loot/scope v0.0.0-20241001095052-f7bf22cbd9c4/go.mod h1:yBxCP5Hp0KZPGUeDtxJGNBHYyjR8ujoXjL2lMGP5PQI=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
