@@ -108,18 +108,9 @@ func (r *Runner) Run(targets ...string) (results []Result) {
 		return []Result{r.capture(targets[0])}
 	}
 
-	sem := make(chan struct{}, r.Options.Concurrency)
-	var wg sync.WaitGroup
-	for _, target := range targets {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(t string) {
-			defer func() { <-sem }()
-			defer wg.Done()
-			results = append(results, r.capture(t))
-		}(target)
-	}
-	wg.Wait()
+	r.runWithConcurrency(func(t string) {
+		results = append(results, r.capture(t))
+	}, targets...)
 
 	return results
 }
@@ -128,6 +119,12 @@ func (r *Runner) Run(targets ...string) (results []Result) {
 func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
 	defer close(resultsChan)
 
+	r.runWithConcurrency(func(t string) {
+		resultsChan <- r.capture(t)
+	}, targets...)
+}
+
+func (r *Runner) runWithConcurrency(worker func(string), targets ...string) {
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
 	for _, target := range targets {
@@ -136,18 +133,10 @@ func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-			resultsChan <- r.capture(t)
+			worker(t)
 		}(target)
 	}
 	wg.Wait()
-}
-
-func (r *Runner) runWorker(url string) Result {
-	if !r.isVisited(url) {
-		r.addVisited(url)
-		return r.worker(url)
-	}
-	return Result{}
 }
 
 func (r *Runner) capture(target string) Result {
@@ -191,11 +180,11 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 		return resultWithHTTPS
 	}
 
-	return r.runWorker(normalizedTarget)
+	return r.captureTarget(normalizedTarget)
 }
 
 func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Result) {
-	result = r.runWorker(scheme + normalizedTarget)
+	result = r.captureTarget(scheme + normalizedTarget)
 	result.Target = target
 	return result
 }

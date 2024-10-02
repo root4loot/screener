@@ -32,8 +32,8 @@ func Init() {
 
 var fuzzyHashes = make(map[string]map[string]bool) // Map of fuzzy hashes for duplicate detection
 
-func (r *Runner) worker(TargetURL string) Result {
-	log.Debugf("Running worker on %s", TargetURL)
+func (r *Runner) captureTarget(TargetURL string) Result {
+	log.Debugf("Running capture on %s", TargetURL)
 	result := Result{TargetURL: TargetURL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
