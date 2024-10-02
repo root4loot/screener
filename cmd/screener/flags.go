@@ -94,7 +94,6 @@ OUTPUT:
         --version                display version
 `
 
-// parseAndSetOptions parses the command line options and sets the options
 func (c *CLI) parseFlags() {
 	// TARGET
 	flag.StringVar(&c.TargetURL, "target", "", "")
