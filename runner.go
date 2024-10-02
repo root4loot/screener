@@ -18,7 +18,6 @@ type Runner struct {
 	mutex   sync.Mutex
 }
 
-// Options contains options for the runner
 type Options struct {
 	Concurrency             int            // number of concurrent requests
 	CaptureHeight           int            // height of the capture
@@ -92,7 +91,6 @@ func NewRunner() *Runner {
 func NewRunnerWithOptions(options Options) *Runner {
 	SetLogLevel(&options)
 
-	// If no scope is specified, create a new one
 	if options.Scope == nil {
 		newScope := goscope.NewScope()
 		options.Scope = newScope
@@ -107,11 +105,9 @@ func NewRunnerWithOptions(options Options) *Runner {
 // Run captures one or more targets and returns the results. It handles both single and multiple targets.
 func (r *Runner) Run(targets ...string) (results []Result) {
 	if len(targets) == 1 {
-		// Handle single target
 		return []Result{r.capture(targets[0])}
 	}
 
-	// Handle multiple targets
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
 	for _, target := range targets {
@@ -146,7 +142,6 @@ func (r *Runner) RunAsync(resultsChan chan<- Result, targets ...string) {
 	wg.Wait()
 }
 
-// runWorker runs a worker on the given URL.
 func (r *Runner) runWorker(url string) Result {
 	if !r.isVisited(url) {
 		r.addVisited(url)
@@ -155,46 +150,37 @@ func (r *Runner) runWorker(url string) Result {
 	return Result{}
 }
 
-// capture encapsulates the logic to capture a single target.
 func (r *Runner) capture(target string) Result {
 
-	// Add delay between captures if specified
 	if r.Options.DelayBetweenCapture > 0 {
 		time.Sleep(time.Duration(r.Options.DelayBetweenCapture) * time.Second)
 	}
 
-	// Normalize target.
 	normalizedTarget, err := normalize(target)
 	if err != nil {
 		log.Warnf("Could not normalize target: %v", err)
 		return Result{Error: err}
 	}
 
-	// Ensure target has a trailing slash.
 	normalizedTarget, _ = urlutil.EnsureTrailingSlash(normalizedTarget)
 
-	// Add target to scope.
 	r.mutex.Lock()
 	r.Options.Scope.AddTargetToScope(target)
 	r.mutex.Unlock()
 
-	// Skip if already visited or excluded.
 	if r.isVisited(normalizedTarget) || r.Options.Scope.IsTargetExcluded(normalizedTarget) {
 		log.Debugf("Target skipped (already visited or excluded): %s", normalizedTarget)
 		return Result{}
 	}
 
-	// Process the target based on its scheme.
 	return r.processTarget(target, normalizedTarget)
 }
 
-// processTarget processes the given target based on its scheme.
 func (r *Runner) processTarget(target, normalizedTarget string) (result Result) {
 	if !urlutil.HasScheme(normalizedTarget) {
-		// Initially try with https scheme.
 		resultWithHTTPS := r.tryScheme("https://", target, normalizedTarget)
 
-		// If HTTPS fails, then try HTTP unless it's a redirect from HTTP to HTTPS.
+		// If HTTPS fails
 		if resultWithHTTPS.Error != nil {
 			log.Infof("HTTPS failed for %s. Trying HTTP", target)
 			resultWithHTTP := r.tryScheme("http://", target, normalizedTarget)
@@ -203,33 +189,25 @@ func (r *Runner) processTarget(target, normalizedTarget string) (result Result) 
 			}
 		}
 
-		// Return the HTTPS result if HTTP is not attempted or fails due to a redirect back to HTTPS.
 		return resultWithHTTPS
 	}
 
-	// Directly run worker if scheme is present.
 	return r.runWorker(normalizedTarget)
 }
 
-// tryScheme tries to capture the target with the given scheme.
 func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Result) {
 	result = r.runWorker(scheme + normalizedTarget)
 	result.Target = target
 	return result
 }
 
-// getCustomFlags returns custom chromedp.ExecAllocatorOptions based on the Runner's Options.
 func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
-	// log.Debug("Getting custom flags...")
-
 	var customFlags []chromedp.ExecAllocatorOption
 
-	// Add custom flags based on the Runner's Options.
 	if r.Options.IgnoreCertificateErrors {
 		customFlags = append(customFlags, chromedp.Flag("ignore-certificate-errors", true))
 	}
 
-	// Disable HTTP2
 	if r.Options.DisableHTTP2 {
 		customFlags = append(customFlags, chromedp.Flag("disable-http2", true))
 	}
@@ -237,38 +215,33 @@ func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	return customFlags
 }
 
-// normalize ensures that the target has a scheme and a trailing slash.
 func normalize(target string) (string, error) {
-	target = strings.TrimSpace(target) // Trim whitespace
+	target = strings.TrimSpace(target)
 
-	// Add temporary scheme if missing
 	if !urlutil.HasScheme(target) {
 		target = "x://" + target
 	}
 
-	// Parse the target
 	u, err := url.Parse(target)
 	if err != nil {
 		return "", err
 	}
 
-	// Ensure the URL ends with a trailing slash
 	if !strings.HasSuffix(target, u.Path) {
 		u.Path += "/"
 	}
 
-	// Set scheme to https if port is 443
 	if u.Port() != "" {
 		if u.Port() == "443" {
 			u.Scheme = "https"
-			u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
+			u.Host = strings.Split(u.Host, ":")[0]
 		} else if u.Port() == "80" {
 			u.Scheme = "http"
-			u.Host = strings.Split(u.Host, ":")[0] // Remove port from host
+			u.Host = strings.Split(u.Host, ":")[0]
 		}
 	}
 
-	target = strings.TrimPrefix(u.String(), "x://") // Remove temporary scheme
+	target = strings.TrimPrefix(u.String(), "x://")
 
 	return target, nil
 }
@@ -285,7 +258,6 @@ func (r *Runner) isVisited(str string) bool {
 	return r.visited[str]
 }
 
-// SetLogLevel initiates the logger and sets the log level based on the options
 func SetLogLevel(options *Options) {
 	if options.Silence {
 		log.SetLevel(log.FatalLevel)

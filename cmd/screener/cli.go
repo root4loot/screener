@@ -54,7 +54,6 @@ func main() {
 	}
 }
 
-// SetCLIOpts sets the CLI options
 func (cli *CLI) SetCLIOpts() {
 	if cli.IgnoreStatusCodes != "" {
 		codes := strings.Split(cli.IgnoreStatusCodes, ",")
@@ -68,21 +67,14 @@ func (cli *CLI) SetCLIOpts() {
 	}
 }
 
-// processResults processes the results as they come in
 func processResults(runner *screener.Runner, targets ...string) {
-	// Create a channel to receive results
 	results := make(chan screener.Result)
-
-	// Start capturing URLs using multiple goroutines
 	go runner.RunAsync(results, targets...)
-
-	// Need to do something with the results
 	for result := range results {
 		_ = result
 	}
 }
 
-// checkForExits checks for the presence of the -h|--help and -v|--version flags
 func (c *CLI) checkForExits() {
 	if c.Help {
 		c.banner()
@@ -101,7 +93,6 @@ func (c *CLI) checkForExits() {
 	}
 }
 
-// hasStdin determines if the user has piped input
 func (c *CLI) hasStdin() bool {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
@@ -116,17 +107,14 @@ func (c *CLI) hasStdin() bool {
 	return isPipedFromChrDev || isPipedFromFIFO
 }
 
-// hasTarget determines if the user has provided a target
 func (c *CLI) hasTarget() bool {
 	return c.TargetURL != ""
 }
 
-// hasInfile determines if the user has provided an input file
 func (c *CLI) hasInfile() bool {
 	return c.Infile != ""
 }
 
-// readFileLines reads a file line by line
 func (c *CLI) readFileLines() (lines []string, err error) {
 	file, err := os.Open(c.Infile)
 	if err != nil {
