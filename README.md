@@ -8,15 +8,15 @@ A tool used for capturing screenshots of web pages. Uses <a href="https://github
 
 ## Features
 
-- **Stream URLs**: Input URLs via standard input (STDIN) for real-time processing.
-- **Fixed Page Load Wait**: Define a maximum wait time for web page loading before capturing screenshots.
-- **Redirect Handling**: Customize redirect behavior to follow or ignore URL changes.
-- **Unique screenshots**: Uses fuzzy-hashing to prevent saving duplicate screenshots, useful for large-scale scanning.
-- **Concurrency**: Support for concurrent requests for faster processing.
-- **Certificate Error Handling**: Option to ignore SSL certificate errors for testing environments.
-- **HTTP/2 Control**: Disable HTTP/2 for compatibility with various server configurations.
-- **Custom User-Agent**: Set a custom user-agent for requests to simulate different browsers or devices.
-- **Imprint URL in Image**: Choose to include the URL directly in the captured image for context and reference.
+- Stream URLs from standard input.
+- Set a wait time before capturing.
+- Follow or ignore redirects.
+- Save only unique screenshots.
+- Handle multiple requests at once.
+- Ignore SSL certificate errors.
+- Disable HTTP/2 if needed.
+- Use a custom user-agent.
+- Option to include URL in images.
 
 ## Installation
 
