@@ -15,14 +15,14 @@ type usageData struct {
 	DefaultTimeout             int
 	DefaultUserAgent           string
 	DefaultSaveUnique          bool
-	DefaultDisableHTTP2        bool
-	DefaultFollowRedirects     bool
+	DefaultUseHTTP2            bool
+	DefaultIgnoreRedirects     bool
 	DefaultCaptureWidth        int
 	DefaultCaptureHeight       int
 	DefaultCaptureFull         bool
 	DefaultFixedWait           int
 	DefaultDelayBetweenCapture int
-	DefaultIgnoreCertErr       bool
+	DefaultRespectCertErr      bool
 	DefaultIgnoreStatusCodes   bool
 	DefaultSilence             bool
 	DefaultOutFolder           string
@@ -37,14 +37,14 @@ func (c *CLI) usage() {
 		DefaultTimeout:             options.Timeout,
 		DefaultUserAgent:           "Chrome Headless",
 		DefaultSaveUnique:          options.SaveUnique,
-		DefaultDisableHTTP2:        options.UseHTTP2,
-		DefaultFollowRedirects:     options.FollowRedirects,
+		DefaultUseHTTP2:            options.UseHTTP2,
+		DefaultIgnoreRedirects:     options.IgnoreRedirects,
 		DefaultCaptureWidth:        options.CaptureWidth,
 		DefaultCaptureHeight:       options.CaptureHeight,
 		DefaultCaptureFull:         options.CaptureFull,
 		DefaultFixedWait:           options.FixedWait,
 		DefaultDelayBetweenCapture: options.DelayBetweenCapture,
-		DefaultIgnoreCertErr:       options.IgnoreCertificateErrors,
+		DefaultRespectCertErr:      options.RespectCertificateErrors,
 		DefaultIgnoreStatusCodes:   len(options.IgnoreStatusCodes) > 0,
 		DefaultSilence:             options.Silence,
 		DefaultOutFolder:           options.SaveScreenshotsPath,
@@ -69,20 +69,20 @@ Usage:
 INPUT:
   -t, --target                   single target
   -l, --list                     input file containing list of targets (one per line)
- 
+
 CONFIGURATIONS:
   -c,   --concurrency            number of concurrent requests               (Default: {{.DefaultConcurrency}})
   -to,  --timeout                timeout for screenshot capture              (Default: {{.DefaultTimeout}} seconds)
   -ua,  --user-agent             set user agent                              (Default: {{.DefaultUserAgent}})
   -su,  --save-unique            save unique screenshots only                (Default: {{.DefaultSaveUnique}})
-  -dh,  --use-http2              use HTTP2                                   (Default: {{.DefaultDisableHTTP2}})
-  -fr,  --follow-redirects       follow redirects                            (Default: {{.DefaultFollowRedirects}})
+  -uh,  --use-http2              use HTTP2                                   (Default: {{.DefaultUseHTTP2}})
+  -nr,  --ignore-redirects       do not follow redirects                     (Default: {{.DefaultIgnoreRedirects}})
   -cw,  --capture-width          screenshot pixel width                      (Default: {{.DefaultCaptureWidth}})
   -ch,  --capture-height         screenshot pixel height                     (Default: {{.DefaultCaptureHeight}})
   -cf,  --capture-full           capture full page                           (Default: {{.DefaultCaptureFull}})
   -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: {{.DefaultFixedWait}})
   -dc,  --delay-between-capture  delay between capture (seconds)             (Default: {{.DefaultDelayBetweenCapture}})
-  -ice, --ignore-cert-err        ignore certificate errors                   (Default: {{.DefaultIgnoreCertErr}})
+  -rce, --respect-cert-err       ignore certificate errors                   (Default: {{.DefaultRespectCertErr}})
   -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: {{.DefaultIgnoreStatusCodes}})
   -s,   --silence                silence output                              (Default: {{.DefaultSilence}})
 
@@ -110,10 +110,10 @@ func (c *CLI) parseFlags() {
 	flag.IntVar(&c.Options.CaptureWidth, "cw", screener.DefaultOptions().CaptureWidth, "")
 	flag.BoolVar(&c.Options.UseHTTP2, "use-http2", screener.DefaultOptions().UseHTTP2, "")
 	flag.BoolVar(&c.Options.UseHTTP2, "uh", screener.DefaultOptions().UseHTTP2, "")
-	flag.BoolVar(&c.Options.FollowRedirects, "follow-redirects", screener.DefaultOptions().FollowRedirects, "")
-	flag.BoolVar(&c.Options.FollowRedirects, "fr", screener.DefaultOptions().FollowRedirects, "")
-	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ignore-cert-err", screener.DefaultOptions().IgnoreCertificateErrors, "")
-	flag.BoolVar(&c.Options.IgnoreCertificateErrors, "ice", screener.DefaultOptions().IgnoreCertificateErrors, "")
+	flag.BoolVar(&c.Options.IgnoreRedirects, "ignore-redirects", screener.DefaultOptions().IgnoreRedirects, "")
+	flag.BoolVar(&c.Options.IgnoreRedirects, "ir", screener.DefaultOptions().IgnoreRedirects, "")
+	flag.BoolVar(&c.Options.RespectCertificateErrors, "respect-cert-err", screener.DefaultOptions().RespectCertificateErrors, "")
+	flag.BoolVar(&c.Options.RespectCertificateErrors, "rce", screener.DefaultOptions().RespectCertificateErrors, "")
 	flag.IntVar(&c.Options.FixedWait, "fixed-wait", screener.DefaultOptions().FixedWait, "")
 	flag.IntVar(&c.Options.FixedWait, "fw", screener.DefaultOptions().FixedWait, "")
 	flag.IntVar(&c.Options.Timeout, "timeout", screener.DefaultOptions().Timeout, "")

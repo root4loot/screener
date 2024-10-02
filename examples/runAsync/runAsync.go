@@ -22,17 +22,17 @@ func main() {
 
 	// Set options
 	options := screener.Options{
-		Concurrency:             10,
-		Timeout:                 15,
-		SaveScreenshots:         true,
-		MaxWait:                 30,
-		FollowRedirects:         true,
-		UseHTTP2:                true,
-		IgnoreCertificateErrors: true,
-		Verbose:                 false,
-		Silence:                 true,
-		CaptureWidth:            1366,
-		CaptureHeight:           768,
+		Concurrency:              10,
+		Timeout:                  15,
+		SaveScreenshots:          true,
+		MaxWait:                  30,
+		IgnoreRedirects:          false,
+		UseHTTP2:                 true,
+		RespectCertificateErrors: true,
+		Verbose:                  false,
+		Silence:                  true,
+		CaptureWidth:             1366,
+		CaptureHeight:            768,
 	}
 
 	// Create a screener runner with options

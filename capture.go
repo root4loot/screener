@@ -66,8 +66,8 @@ func (r *Runner) worker(TargetURL string) Result {
 		return result
 	}
 
-	if !r.Options.FollowRedirects && page.MustInfo().URL != TargetURL {
-		log.Warn("Redirect detected, but FollowRedirects is disabled")
+	if r.Options.IgnoreRedirects && page.MustInfo().URL != TargetURL {
+		log.Warn("Not following redirects as --ignore-redirects flag is set")
 		return result
 	}
 
@@ -194,7 +194,7 @@ func newLauncher(options Options) *launcher.Launcher {
 		l.Set("user-agent", options.UserAgent)
 	}
 
-	if options.IgnoreCertificateErrors {
+	if !options.RespectCertificateErrors {
 		l.Set("ignore-certificate-errors", "true")
 	}
 

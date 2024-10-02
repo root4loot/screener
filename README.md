@@ -37,6 +37,8 @@ docker run --rm -it $(docker build -q .) -t example.com
 ## Usage
 
 ```
+
+
 Usage: screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
@@ -48,14 +50,14 @@ CONFIGURATIONS:
   -to,  --timeout                timeout for screenshot capture              (Default: 15 seconds)
   -ua,  --user-agent             set user agent                              (Default: Chrome Headless)
   -su,  --save-unique            save unique screenshots only                (Default: false)
-  -dh,  --use-http2              use HTTP2                                   (Default: false)
-  -fr,  --follow-redirects       follow redirects                            (Default: true)
+  -uh,  --use-http2              use HTTP2                                   (Default: false)
+  -nr,  --ignore-redirects       do not follow redirects                     (Default: false)
   -cw,  --capture-width          screenshot pixel width                      (Default: 1366)
   -ch,  --capture-height         screenshot pixel height                     (Default: 768)
   -cf,  --capture-full           capture full page                           (Default: false)
   -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: 2)
   -dc,  --delay-between-capture  delay between capture (seconds)             (Default: 0)
-  -ice, --ignore-cert-err        ignore certificate errors                   (Default: true)
+  -rce, --respect-cert-err       ignore certificate errors                   (Default: false)
   -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: false)
   -s,   --silence                silence output                              (Default: false)
 

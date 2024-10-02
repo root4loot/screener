@@ -19,26 +19,26 @@ type Runner struct {
 }
 
 type Options struct {
-	Concurrency             int          // number of concurrent requests
-	CaptureHeight           int          // height of the capture
-	CaptureWidth            int          // width of the capture
-	Timeout                 int          // Timeout for each capture (seconds)
-	IgnoreCertificateErrors bool         // Ignore certificate errors
-	UseHTTP2                bool         // Use HTTP2
-	SaveScreenshots         bool         // Save screenshot to file
-	SaveScreenshotsPath     string       // Path to save screenshots
-	SaveUnique              bool         // Save unique screenshots only
-	Scope                   *scope.Scope // Scope to use
-	UserAgent               string       // User agent to use
-	MaxWait                 int          // Max wait time in seconds before taking screenshot, regardless of page load completion
-	FixedWait               int          // Fixed wait time in seconds before taking screenshot, regardless of page load completion
-	IgnoreStatusCodes       []int64      // List of status codes to ignore
-	DelayBetweenCapture     int          // Delay in seconds between captures for multiple targets
-	FollowRedirects         bool         // Follow redirects
-	CaptureFull             bool         // Whether to take a full page screenshot
-	ImprintURL              bool         // Whether to include the URL in the image
-	Silence                 bool         // Silence output
-	Verbose                 bool         // Verbose logging
+	Concurrency              int          // number of concurrent requests
+	CaptureHeight            int          // height of the capture
+	CaptureWidth             int          // width of the capture
+	Timeout                  int          // Timeout for each capture (seconds)
+	RespectCertificateErrors bool         // Respect certificate errors
+	UseHTTP2                 bool         // Use HTTP2
+	SaveScreenshots          bool         // Save screenshot to file
+	SaveScreenshotsPath      string       // Path to save screenshots
+	SaveUnique               bool         // Save unique screenshots only
+	Scope                    *scope.Scope // Scope to use
+	UserAgent                string       // User agent to use
+	MaxWait                  int          // Max wait time in seconds before taking screenshot, regardless of page load completion
+	FixedWait                int          // Fixed wait time in seconds before taking screenshot, regardless of page load completion
+	IgnoreStatusCodes        []int64      // List of status codes to ignore
+	DelayBetweenCapture      int          // Delay in seconds between captures for multiple targets
+	IgnoreRedirects          bool         // Do not follow redirects
+	CaptureFull              bool         // Whether to take a full page screenshot
+	ImprintURL               bool         // Whether to include the URL in the image
+	Silence                  bool         // Silence output
+	Verbose                  bool         // Verbose logging
 }
 
 type Result struct {
@@ -56,22 +56,22 @@ func init() {
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
 	return &Options{
-		Concurrency:             10,
-		Timeout:                 15,
-		CaptureWidth:            1366,
-		CaptureHeight:           768,
-		IgnoreCertificateErrors: true,
-		SaveUnique:              false,
-		UseHTTP2:                false,
-		SaveScreenshots:         false,
-		SaveScreenshotsPath:     "./screenshots",
-		CaptureFull:             false,
-		MaxWait:                 30,
-		FixedWait:               2,
-		DelayBetweenCapture:     0,
-		FollowRedirects:         true,
-		ImprintURL:              true,
-		IgnoreStatusCodes:       []int64{},
+		Concurrency:              10,
+		Timeout:                  15,
+		CaptureWidth:             1366,
+		CaptureHeight:            768,
+		RespectCertificateErrors: false,
+		SaveUnique:               false,
+		UseHTTP2:                 false,
+		SaveScreenshots:          false,
+		SaveScreenshotsPath:      "./screenshots",
+		CaptureFull:              false,
+		MaxWait:                  30,
+		FixedWait:                2,
+		DelayBetweenCapture:      0,
+		IgnoreRedirects:          false,
+		ImprintURL:               true,
+		IgnoreStatusCodes:        []int64{},
 	}
 }
 
@@ -203,7 +203,7 @@ func (r *Runner) tryScheme(scheme, target, normalizedTarget string) (result Resu
 func (r *Runner) GetCustomFlags() []chromedp.ExecAllocatorOption {
 	var customFlags []chromedp.ExecAllocatorOption
 
-	if r.Options.IgnoreCertificateErrors {
+	if !r.Options.RespectCertificateErrors {
 		customFlags = append(customFlags, chromedp.Flag("ignore-certificate-errors", true))
 	}
 
