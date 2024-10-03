@@ -4,91 +4,38 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"text/template"
 
-	screener "github.com/root4loot/screener"
+	"github.com/root4loot/goutils/log"
+	"github.com/root4loot/screener"
 )
 
-type usageData struct {
-	AppName                    string
-	DefaultConcurrency         int
-	DefaultTimeout             int
-	DefaultUserAgent           string
-	DefaultSaveUnique          bool
-	DefaultUseHTTP2            bool
-	DefaultIgnoreRedirects     bool
-	DefaultCaptureWidth        int
-	DefaultCaptureHeight       int
-	DefaultCaptureFull         bool
-	DefaultFixedWait           int
-	DefaultDelayBetweenCapture int
-	DefaultRespectCertErr      bool
-	DefaultIgnoreStatusCodes   bool
-	DefaultSilence             bool
-	DefaultOutFolder           string
-	DefaultNoURL               bool
-}
-
-func (c *CLI) usage() {
-	options := screener.DefaultOptions()
-	data := usageData{
-		AppName:                    os.Args[0],
-		DefaultConcurrency:         options.Concurrency,
-		DefaultTimeout:             options.Timeout,
-		DefaultUserAgent:           "Chrome Headless",
-		DefaultSaveUnique:          options.SaveUnique,
-		DefaultUseHTTP2:            options.UseHTTP2,
-		DefaultIgnoreRedirects:     options.IgnoreRedirects,
-		DefaultCaptureWidth:        options.CaptureWidth,
-		DefaultCaptureHeight:       options.CaptureHeight,
-		DefaultCaptureFull:         options.CaptureFull,
-		DefaultFixedWait:           options.FixedWait,
-		DefaultDelayBetweenCapture: options.DelayBetweenCapture,
-		DefaultRespectCertErr:      options.RespectCertificateErrors,
-		DefaultIgnoreStatusCodes:   len(options.IgnoreStatusCodes) > 0,
-		DefaultSilence:             options.Silence,
-		DefaultOutFolder:           options.SaveScreenshotsPath,
-		DefaultNoURL:               !options.ImprintURL,
-	}
-
-	tmpl, err := template.New("usage").Parse(usageTemplate)
-	if err != nil {
-		panic(err)
-	}
-
-	err = tmpl.Execute(os.Stdout, data)
-	if err != nil {
-		panic(err)
-	}
-}
-
-const usageTemplate = `
+const usage = `
 Usage:
-  {{.AppName}} [options] (-u <target> | -l <targets.txt>)
+  screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
-  -t, --target                   single target
+  -t, --target                   screenshot target (domain, IP, URL)
   -l, --list                     input file containing list of targets (one per line)
 
 CONFIGURATIONS:
-  -c,   --concurrency            number of concurrent requests               (Default: {{.DefaultConcurrency}})
-  -to,  --timeout                timeout for screenshot capture              (Default: {{.DefaultTimeout}} seconds)
-  -ua,  --user-agent             set user agent                              (Default: {{.DefaultUserAgent}})
-  -su,  --save-unique            save unique screenshots only                (Default: {{.DefaultSaveUnique}})
-  -uh,  --use-http2              use HTTP2                                   (Default: {{.DefaultUseHTTP2}})
-  -nr,  --ignore-redirects       do not follow redirects                     (Default: {{.DefaultIgnoreRedirects}})
-  -cw,  --capture-width          screenshot pixel width                      (Default: {{.DefaultCaptureWidth}})
-  -ch,  --capture-height         screenshot pixel height                     (Default: {{.DefaultCaptureHeight}})
-  -cf,  --capture-full           capture full page                           (Default: {{.DefaultCaptureFull}})
-  -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: {{.DefaultFixedWait}})
-  -dc,  --delay-between-capture  delay between capture (seconds)             (Default: {{.DefaultDelayBetweenCapture}})
-  -rce, --respect-cert-err       ignore certificate errors                   (Default: {{.DefaultRespectCertErr}})
-  -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: {{.DefaultIgnoreStatusCodes}})
-  -s,   --silence                silence output                              (Default: {{.DefaultSilence}})
+  -c,   --concurrency            number of concurrent requests               (Default: 10)
+  -to,  --timeout                timeout for screenshot capture              (Default: 15 seconds)
+  -ua,  --user-agent             set user agent                              (Default: Chrome Headless)
+  -su,  --save-unique            save unique screenshots only                (Default: false)
+  -uh,  --use-http2              use HTTP2                                   (Default: false)
+  -nr,  --ignore-redirects       do not follow redirects                     (Default: false)
+  -cw,  --capture-width          screenshot pixel width                      (Default: 1366)
+  -ch,  --capture-height         screenshot pixel height                     (Default: 768)
+  -cf,  --capture-full           capture full page                           (Default: false)
+  -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: 0)
+  -dc,  --delay-between-capture  delay between capture (seconds)             (Default: 0)
+  -rce, --respect-cert-err       ignore certificate errors                   (Default: false)
+  -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: false)
+  -s,   --silence                silence output                              (Default: false)
 
 OUTPUT:
-  -o,   --outfolder              save images to given folder                 (Default: {{.DefaultOutFolder}})
-  -nu,  --no-url                 do not imprint URL in image                 (Default: {{.DefaultNoURL}})
+  -o,   --outfolder              save images to given folder                 (Default: screenshots)
+  -nu,  --no-url                 do not imprint URL in image                 (Default: false)
   -s,   --silence                silence output
   -v,   --verbose                verbose output
         --version                display version
@@ -142,13 +89,19 @@ func (c *CLI) parseFlags() {
 	flag.BoolVar(&c.Help, "h", false, "")
 	flag.BoolVar(&c.Version, "version", false, "")
 
-	flag.Usage = func() {
-		c.banner()
-		c.usage()
-	}
 	flag.Parse()
-}
 
-func (c *CLI) banner() {
-	fmt.Println("\nscreener", screener.Version, "by", author, "\n")
+	if c.Help {
+		fmt.Print(usage)
+		os.Exit(0)
+	}
+
+	if c.Version {
+		fmt.Println("screener ", screener.Version)
+		os.Exit(0)
+	}
+
+	if !c.hasStdin() && !c.hasInfile() && !c.hasTarget() && !c.Help {
+		log.Error("Missing target")
+	}
 }

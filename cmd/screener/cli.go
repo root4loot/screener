@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -29,7 +28,6 @@ func init() {
 func main() {
 	cli := &CLI{screener.NewRunner(), "", "", false, false, ""}
 	cli.parseFlags()
-	cli.checkForExits()
 	cli.SetCLIOpts()
 
 	runner := cli.Runner
@@ -72,24 +70,6 @@ func processResults(runner *screener.Runner, targets ...string) {
 	go runner.RunAsync(results, targets...)
 	for result := range results {
 		_ = result
-	}
-}
-
-func (c *CLI) checkForExits() {
-	if c.Help {
-		c.banner()
-		c.usage()
-		os.Exit(0)
-	}
-	if c.Version {
-		fmt.Println("screener ", screener.Version)
-		os.Exit(0)
-	}
-
-	if !c.hasStdin() && !c.hasInfile() && !c.hasTarget() {
-		fmt.Println("")
-		fmt.Printf("%s\n\n", "Missing target")
-		c.usage()
 	}
 }
 
