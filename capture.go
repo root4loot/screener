@@ -39,7 +39,25 @@ func (r *Runner) captureTarget(TargetURL string) Result {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.Options.Timeout)*time.Second)
 	defer cancel()
 
-	l := newLauncher(*r.Options)
+	path, _ := launcher.LookPath()
+
+	l := launcher.New().
+		Headless(true).
+		Bin(path).
+		NoSandbox(true)
+
+	if r.Options.UserAgent != "" {
+		l.Set("user-agent", r.Options.UserAgent)
+	}
+
+	if !r.Options.RespectCertificateErrors {
+		l.Set("ignore-certificate-errors", "true")
+	}
+
+	if !r.Options.UseHTTP2 {
+		l.Set("disable-http2", "true")
+	}
+
 	browserURL := l.MustLaunch()
 	browser := rod.New().ControlURL(browserURL).MustConnect()
 	defer browser.MustClose()
@@ -174,29 +192,6 @@ func (result Result) WriteToFolder(writeFolderPath string) (filename string, err
 	}
 
 	return filename, nil
-}
-
-func newLauncher(options Options) *launcher.Launcher {
-	path, _ := launcher.LookPath()
-
-	l := launcher.New().
-		Headless(true).
-		Bin(path).
-		NoSandbox(true)
-
-	if options.UserAgent != "" {
-		l.Set("user-agent", options.UserAgent)
-	}
-
-	if !options.RespectCertificateErrors {
-		l.Set("ignore-certificate-errors", "true")
-	}
-
-	if !options.UseHTTP2 {
-		l.Set("disable-http2", "true")
-	}
-
-	return l
 }
 
 func isDuplicate(rawURL string, image []byte) bool {
