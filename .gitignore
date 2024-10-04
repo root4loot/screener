@@ -1,3 +1,30 @@
+# Ignore all hidden files and directories
 **/.*
+
+# Do not ignore .gitignore and .github
 !.gitignore
 !.github
+
+# Ignore binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore build directories
+/build/
+/dist/
+/node_modules/
+
+# Ignore environment files
+.env

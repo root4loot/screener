@@ -3,20 +3,20 @@
 </p>
 
 <div align="center">
-A tool used for capturing screenshots of web pages. Uses <a href="https://github.com/go-rod/rod">Rod</a> for headless browsing.
+A tool to capture screenshots of web pages using <a href="https://github.com/go-rod/rod">Rod</a> for headless browsing.
 </div>
 
 ## Features
 
-- Stream URLs from standard input.
-- Set a wait time before capturing.
-- Follow or ignore redirects.
-- Save only unique screenshots.
-- Handle multiple requests at once.
-- Ignore SSL certificate errors.
-- Disable HTTP/2 if needed.
-- Use a custom user-agent.
-- Option to include URL in images.
+- Stream URLs from input.
+- Wait before capturing.
+- Follow or skip redirects.
+- Save unique screenshots only.
+- Handle many requests at once.
+- Ignore SSL errors.
+- Turn off HTTP/2 if needed.
+- Use a custom user agent.
+- Add URL to images.
 
 ## Installation
 
@@ -37,52 +37,51 @@ docker run --rm -it $(docker build -q .) -t example.com
 ## Usage
 
 ```
-
-
-Usage: screener [options] (-t <target> | -l <targets.txt>)
+Usage:
+  screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
-  -t, --target                   single target
-  -l, --list                     input file containing list of targets (one per line)
+  -t, --target                   target input (domain, IP, URL)
+  -l, --list                     input file with list of targets (one per line)
 
 CONFIGURATIONS:
-  -c,   --concurrency            number of concurrent requests               (Default: 10)
-  -to,  --timeout                timeout for screenshot capture              (Default: 15 seconds)
-  -ua,  --user-agent             set user agent                              (Default: Chrome Headless)
-  -su,  --save-unique            save unique screenshots only                (Default: false)
-  -uh,  --use-http2              use HTTP2                                   (Default: false)
-  -nr,  --ignore-redirects       do not follow redirects                     (Default: false)
-  -cw,  --capture-width          screenshot pixel width                      (Default: 1366)
-  -ch,  --capture-height         screenshot pixel height                     (Default: 768)
-  -cf,  --capture-full           capture full page                           (Default: false)
-  -fw,  --fixed-wait             fixed wait time before capturing (seconds)  (Default: 2)
-  -dc,  --delay-between-capture  delay between capture (seconds)             (Default: 0)
-  -rce, --respect-cert-err       ignore certificate errors                   (Default: false)
-  -isc, --ignore-status-codes    ignore HTTP status codes (comma separated)  (Default: false)
-  -s,   --silence                silence output                              (Default: false)
+  -c,   --concurrency            number of concurrent operations                         (Default: 10)
+  -ad,  --avoid-duplicates       prevent saving duplicate outputs                        (Default: false)
+  -dt,  --duplicate-threshold    threshold for similarity percentage (0-100)             (Default: 96)
+                                 consider outputs as duplicates when similarity score is 
+                                 greater than or equal to this value; outputs will not be 
+                                 saved when --avoid-duplicates is enabled.
+  -to,  --timeout                operation timeout                                       (Default: 15 seconds)
+  -ua,  --user-agent             specify user agent                                      (Default: Chrome UA)
+  -uh,  --use-http2              enable HTTP2                                            (Default: false)
+  -nr,  --ignore-redirects       disable following redirects                             (Default: false)
+  -cw,  --capture-width          output width                                            (Default: 1366)
+  -ch,  --capture-height         output height                                           (Default: 768)
+  -cf,  --capture-full           capture entire content                                  (Default: false)
+  -dc,  --delay-capture          delay before operation (seconds)                        (Default: 2)
+  -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
+  -rce, --respect-cert-err       respect certificate errors                              (Default: false)
+  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: false)
 
 OUTPUT:
-  -o,   --outfolder              save images to given folder                 (Default: ./screenshots)
-  -nu,  --no-url                 do not imprint URL in image                 (Default: false)
-  -s,   --silence                silence output
-  -v,   --verbose                verbose output
+  -o,   --outfolder              save outputs to specified folder                        (Default: ./outputs)
+  -nt,  --no-text                do not add text to output images                        (Default: false)
+  -v,   --debug                  enable debug mode
         --version                display version
-
 ```
 
 ## Example
 
-### Screenshot Single Target
+### Single Target
 
-Capture a single target. If the scheme (http/https) is not specified, then it will default to https and fallback to http if the former fails.
+Capture a single target. If you don't specify http or https, it defaults to https and tries http if https fails.
 
 ```sh
-$ screener -t "example.com"
-[screener] (INF) Preparing screenshot: https://example.com
-[screener] (RES) Successful screenshot: https://example.com/
+$ screener -t example.com
+[screener] (INF) Screenshot saved to screenshots/https_example.com.png
 ```
 
-### Screenshot Multiple Targets
+### Multiple Targets
 
 Capture multiple targets.
 
@@ -100,63 +99,66 @@ Note that targets can be IP, domain, or full URL.
 
 ```sh
 $ screener -l targets.txt
-[screener] (RES) Saved screenshot to screenshots/http_example.com.png
-[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_sitemap.xml.png
-[screener] (RES) Saved screenshot to screenshots/https_scanme.sh.png
-[screener] (RES) Saved screenshot to screenshots/https_142.250.74.110.png
-[screener] (RES) Saved screenshot to screenshots/https_google.com.png
-[screener] (RES) Saved screenshot to screenshots/https_bugcrowd.com.png
+[screener] (RES) Screenshot saved to screenshots/http_example.com.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_sitemap.xml.png
+[screener] (RES) Screenshot saved to screenshots/https_scanme.sh.png
+[screener] (RES) Screenshot saved to screenshots/https_142.250.74.110.png
+[screener] (RES) Screenshot saved to screenshots/https_google.com.png
+[screener] (RES) Screenshot saved to screenshots/https_bugcrowd.com.png
 ```
 
 You may also "stream" targets to screener, capturing screenshots as they are received:
 
 ```sh
 $ cat targets.txt | screener
-[screener] (RES) Saved screenshot to screenshots/https_142.250.74.110.png
-[screener] (RES) Saved screenshot to screenshots/https_google.com.png
-[screener] (RES) Saved screenshot to screenshots/https_bugcrowd.com.png
-[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_sitemap.xml.png
-[screener] (RES) Saved screenshot to screenshots/http_example.com.png
-[screener] (RES) Saved screenshot to screenshots/https_scanme.sh.png
+[screener] (RES) Screenshot saved to screenshots/https_142.250.74.110.png
+[screener] (RES) Screenshot saved to screenshots/https_google.com.png
+[screener] (RES) Screenshot saved to screenshots/https_bugcrowd.com.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_sitemap.xml.png
+[screener] (RES) Screenshot saved to screenshots/http_example.com.png
+[screener] (RES) Screenshot saved to screenshots/https_scanme.sh.png
 ```
 
 When dealing with many same-site URLs, use the `-su` or `--save-unique` flags to avoid saving multiple copies of the same screenshot. This makes it easier to sort through your screenshots!
 In the following example, we're using [recrawl](https://github.com/root4loot/recrawl) to crawl a target site and pipe its results to screener with the `--save-unique` flag set. For more information, see [recrawl](https://github.com/root4loot/recrawl).
 
 ```sh
-$ recrawl --target "hackerone.com" --hide-status --hide-media | screener --save-unique
-[recrawl] (INF) Hiding status codes: true
-[recrawl] (INF) Hiding media: [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
-[recrawl] (INF) Notice: Output is being piped. 'Result' logs will be formatted accordingly.
-[recrawl] (INF) Crawling target: https://hackerone.com
-
-[screener] (INF) Skipping duplicate screenshot for https://hackerone.com/robots.txt
-[screener] (RES) Saved screenshot to screenshots/https_hackerone.com_robots.txt.png
-[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/node/12420/
-[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_node_12420.png
-[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/product/challenge/
-[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_product_challenge.png
-[screener] (INF) Skipping duplicate screenshot for https://www.hackerone.com/node/9916/
-[screener] (RES) Saved screenshot to screenshots/https_www.hackerone.com_node_9916.png
+$ recrawl --target "hackerone.com" --hide-status --hide-media | screener --avoid-duplicates
+[recrawl] (INF) Hiding status code from output
+[recrawl] (INF) Excluding media [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
+[recrawl] (INF) Notice: Output is being piped. Results will be formatted accordingly.
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_robots.txt.png
+[screener] (INF) Screenshot saved to screenshots/https_www.hackerone.com.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-DsnehVnn.css.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_hacktivity_overview.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_leaderboard_all-time.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_users_sign_in.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_leaderboard.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_opportunities_all_search.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-BQGA2x_6.js.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_constants-06feb5198be5bd0ee51e0df3fedfd6d8ff1605a0e97a34becc0ec8615eda2e26.js.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_css-B6Ng0SnZ.css.png
+[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_pages-06310525d168da11de8f7941d231b4cae41abc6c58c72e6b4449e78fbfcb628e.css.png
 ...
 ```
 
 ## Example Screenshot
 
 <p align="center">
-<img src="./assets/https_example.com.png" alt="screenshot example"/>
+<img src="./pkg/screener/assets/screenshot_with_text.png" alt="screenshot example"/>
 </p>
 
 ## Tips
 
 - Use `-nu` or `--no-url` flag to remove the URL from the image.
-- Use `-su` or `--save-unique` flag to save only screenshots that are unique.
+- Use `-ad` or `--avoid-duplicates` flag to prevent duplicate images from being saved.
 - macOS users can quickly access websites from screenshots: Press `Space` to preview an image, then mouse over the URL imprinted at the bottom. You can often click the link directly with `Command` + `Click`. If this method doesn't work, open the image in the Preview app to click the URL.
 
-## Library Example 📦
+## Library Example
 
 ```
-go get github.com/root4loot/screener
+go get github.com/root4loot/screener/pkg/screener
 ```
 
 ```go
@@ -164,21 +166,70 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 
-	"github.com/root4loot/screener"
+	"github.com/root4loot/goutils/urlutil"
+	"github.com/root4loot/screener/pkg/screener"
 )
 
 func main() {
-	// Create runner with default options
-	runner := screener.NewRunner()
-	runner.Options.SaveScreenshots = true
+	options := screener.NewOptions()
+	options.CaptureWidth = 1024
+	options.CaptureHeight = 768
+	// more options ...
 
-	// Capture a single URL
-	result := runner.Run("https://example.com", "https://hackerone.com")
+	s := screener.NewScreenerWithOptions(options)
 
-	// Process the result
-	for _, result := range result {
-		fmt.Println(result.TargetURL, result.LandingURL, result.Error, len(result.Image))
+	urls := []string{
+		"https://example.com",
+		"https://example.org",
+		"https://scanme.sh",
+	}
+
+	var results []screener.Result
+
+	for _, u := range urls {
+		parsedURL, err := url.Parse(u)
+		if err != nil {
+			fmt.Printf("Error parsing URL %s: %v\n", u, err)
+			continue
+		}
+
+		// Capture screenshot
+		result, err := s.CaptureScreenshot(parsedURL)
+		if err != nil {
+			fmt.Printf("Error capturing screenshot for %s: %v\n", u, err)
+			continue
+		}
+
+		// Check for duplicates
+		if result.IsSimilarToAny(results, 96) { // 96% similarity
+			fmt.Printf("Screenshot for %s is a duplicate, skipping\n", u)
+			continue
+		}
+
+		// Add text to image
+		origin, err := urlutil.GetOrigin(result.TargetURL)
+		if err != nil {
+			fmt.Printf("Error getting origin for %s: %v", result.TargetURL, err)
+			return
+		}
+
+		result.Image, err = result.Image.AddTextToImage(origin)
+		if err != nil {
+			fmt.Printf("Error adding text to image for %s: %v\n", u, err)
+			continue
+		}
+
+		// Save image to file
+		filename, err := result.SaveImageToFolder("./screenshots")
+		if err != nil {
+			fmt.Printf("Error saving screenshot for %s: %v\n", u, err)
+			continue
+		}
+
+		fmt.Printf("Screenshot saved to %s\n", filename)
+		results = append(results, *result)
 	}
 }
 

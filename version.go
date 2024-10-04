@@ -1,3 +1,5 @@
-package screener
+package version
 
-const Version = "0.0.0"
+var Version = "dev"
+var Commit = ""
+var Date = ""
