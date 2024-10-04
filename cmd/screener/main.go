@@ -161,7 +161,7 @@ func NewCLI() *cli {
 	return cli
 }
 
-func processTarget(worker func(string), concurrency int, targetChannel <-chan string, done chan struct{}) {
+func processTarget(worker func(string) error, concurrency int, targetChannel <-chan string, done chan struct{}) {
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
 
@@ -172,7 +172,10 @@ func processTarget(worker func(string), concurrency int, targetChannel <-chan st
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-			worker(t)
+
+			if err := worker(t); err != nil {
+				log.Errorf("Failed to process target %s: %v", t, err)
+			}
 		}(target)
 	}
 
@@ -278,25 +281,24 @@ func (cli *cli) parseFlags() {
 
 var results []screener.Result
 
-func (cli *cli) worker(target string) {
+// Modify the worker function to return an error.
+func (cli *cli) worker(target string) error {
 	var err error
 	var result *screener.Result
 
 	target, err = urlutil.RemoveDefaultPort(target)
 	if err != nil {
-		log.Errorf("Error removing default port for %s: %v", target, err)
-		return
+		return fmt.Errorf("error removing default port for %s: %w", target, err)
 	}
 
+	// Handle cases where URL does not have a scheme (http or https)
 	if !urlutil.HasScheme(target) {
 		parsedURL, err := url.Parse("https://" + target)
 		if err != nil {
-			log.Errorf("Error parsing target %s: %v", target, err)
-			return
+			return fmt.Errorf("error parsing target %s: %w", target, err)
 		}
 
 		httpsResult, err := cli.Screener.CaptureScreenshot(parsedURL)
-
 		if err != nil {
 			log.Debugf("HTTPS failed for %s. Trying HTTP", target)
 			parsedURL.Scheme = "http"
@@ -312,44 +314,42 @@ func (cli *cli) worker(target string) {
 	} else {
 		parsedURL, err := url.Parse(target)
 		if err != nil {
-			log.Errorf("Error parsing target %s: %v", target, err)
-			return
+			return fmt.Errorf("error parsing target %s: %w", target, err)
 		}
 		result, err = cli.Screener.CaptureScreenshot(parsedURL)
 		if err != nil {
-			log.Errorf("Error capturing screenshot for %s: %v", target, err)
-			return
+			return fmt.Errorf("error capturing screenshot for %s: %w", target, err)
 		}
 	}
 
 	if cli.AvoidDuplicates && result.IsSimilarToAny(results, cli.DuplicateThreshold) {
-		return
+		return nil
 	}
 
 	if result != nil {
 		results = append(results, *result)
 	}
 
+	// Add imprint if needed
 	if !cli.NoImprint {
 		origin, err := urlutil.GetOrigin(result.TargetURL)
 		if err != nil {
-			log.Errorf("Error getting origin for %s: %v", result.TargetURL, err)
-			return
+			return fmt.Errorf("error getting origin for %s: %w", result.TargetURL, err)
 		}
 
 		result.Image, err = result.Image.AddTextToImage(origin)
 		if err != nil {
-			log.Errorf("Error adding text to image for %s: %v", origin, err)
-			return
+			return fmt.Errorf("error adding text to image for %s: %w", origin, err)
 		}
 	}
 
 	fn, err := result.SaveImageToFolder(cli.SaveScreenshotFolder)
 	if err != nil {
-		log.Errorf("Error saving screenshot: %v", err)
-		return
+		return fmt.Errorf("error saving screenshot: %w", err)
 	}
 	log.Infof("Screenshot saved to %s", fn)
+
+	return nil
 }
 
 func (cli *cli) hasStdin() bool {

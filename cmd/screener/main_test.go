@@ -62,6 +62,7 @@ func TestParseFlags(t *testing.T) {
 	}
 }
 
+// TestWorkerWithInvalidURL tests handling of an invalid URL.
 func TestWorkerWithInvalidURL(t *testing.T) {
 	cli := NewCLI()
 	cli.Screener = screener.NewScreenerWithOptions(screener.NewOptions())
@@ -72,12 +73,4 @@ func TestWorkerWithInvalidURL(t *testing.T) {
 	if len(results) != 0 {
 		t.Errorf("Expected no results for invalid URL, got %d", len(results))
 	}
-}
-func TestMain(m *testing.M) {
-	// Setup code if needed
-	code := m.Run()
-
-	// Teardown code if needed
-
-	os.Exit(code)
 }
