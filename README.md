@@ -1,9 +1,18 @@
 <p align="center">
-<img src="./assets/logo.png" alt="screener logo" width="250"/>
+  <img src="./assets/logo.png" alt="screener logo" width="250"/>
 </p>
 
 <div align="center">
-A tool to capture screenshots of web pages using <a href="https://github.com/go-rod/rod">Rod</a> for headless browsing.
+  A tool to capture screenshots of web pages using <a href="https://github.com/go-rod/rod">Rod</a> for headless browsing.
+</div>
+
+<br>
+
+<div align="center">
+  <a href="https://github.com/root4loot/screener/actions/workflows/test-all.yml">
+    <img src="https://github.com/root4loot/screener/actions/workflows/test-all.yml/badge.svg?branch=main" alt="Test All"/>
+  </a>
+  <img src="https://img.shields.io/twitter/follow/danielantonsen.svg?style=dark" alt="Twitter Follow"/>
 </div>
 
 ## Features
