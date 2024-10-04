@@ -15,6 +15,12 @@ func TestCaptureScreenshot(t *testing.T) {
 	options.CaptureWidth = 1080
 	options.CaptureHeight = 720
 
+	if len(referenceImageData) == 0 {
+		t.Fatal("Reference image data not loaded")
+	}
+
+	t.Logf("Reference image data size: %d bytes", len(referenceImageData))
+
 	screener := NewScreenerWithOptions(options)
 
 	parsedURL, err := url.Parse("https://example.com/")
@@ -30,7 +36,14 @@ func TestCaptureScreenshot(t *testing.T) {
 		t.Fatal("Result is nil")
 	}
 
+	t.Logf("Captured image data size: %d bytes", len(result.Image))
+
+	if len(result.Image) == 0 {
+		t.Fatal("Captured image is empty")
+	}
+
 	if !bytes.Equal(referenceImageData, result.Image) {
-		t.Fatal("Captured image does not match reference image")
+		t.Logf("Captured image does not match reference image.")
+		t.Fatalf("Captured image does not match reference image: len(referenceImageData) = %d, len(result.Image) = %d", len(referenceImageData), len(result.Image))
 	}
 }
