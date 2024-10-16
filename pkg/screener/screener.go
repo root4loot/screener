@@ -111,22 +111,23 @@ func Init() {
 func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	var result = &Result{}
 
+	captureURL := parsedURL.String()
+	result.TargetURL = captureURL
+
 	if s.CaptureOptions.DelayBetweenCapture > 0 {
 		time.Sleep(time.Duration(s.CaptureOptions.DelayBetweenCapture) * time.Second)
 	}
 
-	if !strings.HasSuffix(parsedURL.Path, "/") && !urlutil.HasFileExtension(parsedURL.String()) {
+	if !strings.HasSuffix(parsedURL.Path, "/") && !urlutil.HasFileExtension(parsedURL.Path) {
 		parsedURL.Path += "/"
+		captureURL = parsedURL.String()
 	}
 
-	urlToCapture := parsedURL.String()
-	result.TargetURL = urlToCapture
-
-	if s.isVisited(urlToCapture) {
-		log.Warnf("Skipping %s as it has already been visited", urlToCapture)
+	if s.isVisited(captureURL) {
+		log.Warnf("Skipping %s as it has already been visited", captureURL)
 		return nil, nil
 	} else {
-		log.Debugf("Attempting capture on %s", urlToCapture)
+		log.Debugf("Attempting capture on %s", captureURL)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.CaptureOptions.Timeout)*time.Second)
@@ -173,18 +174,20 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 
 	var e proto.NetworkResponseReceived
 	wait := page.WaitEvent(&e)
-	if err := page.Context(ctx).Navigate(urlToCapture); err != nil {
-		return nil, fmt.Errorf("error navigating to %s: %w", urlToCapture, err)
+
+	if err := page.Context(ctx).Navigate(captureURL); err != nil {
+		return nil, fmt.Errorf("error navigating to %s: %w", captureURL, err)
 	}
 
-	if s.CaptureOptions.IgnoreRedirects && page.MustInfo().URL != urlToCapture {
+	wait()
+
+	if s.CaptureOptions.IgnoreRedirects && page.MustInfo().URL != captureURL {
 		log.Warn("Not following redirects as --ignore-redirects flag is set")
 		return nil, nil
 	}
 
-	err := page.Context(ctx).WaitLoad()
-	if err != nil {
-		return nil, fmt.Errorf("%s timed out after %v: %w", time.Duration(s.CaptureOptions.Timeout)*time.Second, urlToCapture, err)
+	if err := page.Context(ctx).WaitLoad(); err != nil {
+		return nil, fmt.Errorf("%s timed out after %v: %w", time.Duration(s.CaptureOptions.Timeout)*time.Second, captureURL, err)
 	}
 
 	if s.CaptureOptions.DelayBeforeCapture > 0 {
@@ -192,20 +195,20 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	}
 
 	result.LandingURL = page.MustInfo().URL
+
+	var err error
 	result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error capturing screenshot for %s: %w", urlToCapture, err)
+		return nil, fmt.Errorf("error capturing screenshot for %s: %w", captureURL, err)
 	}
 
-	wait()
-
 	if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
-		log.Warnf("Ignoring %s as it returned status code %d", urlToCapture, e.Response.Status)
+		log.Warnf("Ignoring %s as it returned status code %d", captureURL, e.Response.Status)
 		return nil, nil
 	}
 
 	result.StatusCode = e.Response.Status
-	s.addVisited(urlToCapture)
+	s.addVisited(captureURL)
 
 	return result, nil
 }
