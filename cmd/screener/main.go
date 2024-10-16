@@ -177,7 +177,7 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 
 			if err := worker(t); err != nil {
 				if errors.Is(err, context.DeadlineExceeded) {
-					log.Warnf("Timeout occurred while capturing screenshot for target %s", t)
+					log.Warnf("Timeout occurred while capturing screenshot for %s", t)
 				} else {
 					log.Errorf("Failed to process target %s: %v", t, err)
 				}
@@ -287,7 +287,6 @@ func (cli *cli) parseFlags() {
 
 var results []screener.Result
 
-// Modify the worker function to return an error.
 func (cli *cli) worker(target string) error {
 	var err error
 	var result *screener.Result
@@ -297,7 +296,6 @@ func (cli *cli) worker(target string) error {
 		return fmt.Errorf("error removing default port for %s: %w", target, err)
 	}
 
-	// Handle cases where URL does not have a scheme (http or https)
 	if !urlutil.HasScheme(target) {
 		parsedURL, err := url.Parse("https://" + target)
 		if err != nil {
@@ -329,14 +327,12 @@ func (cli *cli) worker(target string) error {
 	}
 
 	if cli.AvoidDuplicates && result.IsSimilarToAny(results, cli.DuplicateThreshold) {
+		log.Infof("Skipping screenshot '%s' (duplicate threshold met: %d%%)", target, cli.DuplicateThreshold)
 		return nil
 	}
 
-	if result != nil {
-		results = append(results, *result)
-	}
+	results = append(results, *result)
 
-	// Add imprint if needed
 	if !cli.NoImprint {
 		origin, err := urlutil.GetOrigin(result.TargetURL)
 		if err != nil {
@@ -353,6 +349,7 @@ func (cli *cli) worker(target string) error {
 	if err != nil {
 		return fmt.Errorf("error saving screenshot: %w", err)
 	}
+
 	log.Infof("Screenshot saved to %s", fn)
 
 	return nil
