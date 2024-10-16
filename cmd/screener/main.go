@@ -13,13 +13,13 @@ import (
 	"github.com/root4loot/goutils/fileutil"
 	"github.com/root4loot/goutils/log"
 	"github.com/root4loot/goutils/urlutil"
-	version "github.com/root4loot/screener"
 	"github.com/root4loot/screener/pkg/screener"
 )
 
 const (
-	author = "@danielantonsen"
-	usage  = `
+	author  = "@danielantonsen"
+	version = "0.1.0"
+	usage   = `
 Usage:
   screener [options] (-t <target> | -l <targets.txt>)
 
@@ -255,7 +255,7 @@ func (cli *cli) parseFlags() {
 	}
 
 	if ver {
-		fmt.Println("screener ", version.Version)
+		fmt.Println("screener ", version)
 		os.Exit(0)
 	}
 
