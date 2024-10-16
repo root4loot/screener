@@ -9,8 +9,8 @@
 <br>
 
 <div align="center">
-  <a href="https://github.com/root4loot/screener/actions/workflows/test-all.yml">
-    <img src="https://github.com/root4loot/screener/actions/workflows/test-all.yml/badge.svg?branch=main" alt=""/>
+  <a href="https://github.com/root4loot/screener/actions/workflows/build.yml">
+    <img src="https://github.com/root4loot/screener/actions/workflows/build.yml/badge.svg?branch=main" alt=""/>
   </a>
   <img src="https://img.shields.io/twitter/follow/danielantonsen.svg?style=dark" alt="Twitter Follow"/>
 </div>

@@ -1,4 +1,4 @@
-name: Test All
+name: Build
 
 on:
   push:
@@ -7,8 +7,6 @@ on:
   pull_request:
     branches:
       - main
-  schedule:
-    - cron: "0 8 * * *"
 
 jobs:
   test:
@@ -27,5 +25,9 @@ jobs:
         run: go mod download
 
       - name: Run Tests
-        run: |
-          go list ./... | xargs -I {} sh -c 'go test -v {} || [ $? -eq 5 ]'
+        run: go test -v ./...
+
+      - name: Run Linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.53.2
