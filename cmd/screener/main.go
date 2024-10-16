@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -174,7 +176,11 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 			defer wg.Done()
 
 			if err := worker(t); err != nil {
-				log.Errorf("Failed to process target %s: %v", t, err)
+				if errors.Is(err, context.DeadlineExceeded) {
+					log.Warnf("Timeout occurred while capturing screenshot for target %s", t)
+				} else {
+					log.Errorf("Failed to process target %s: %v", t, err)
+				}
 			}
 		}(target)
 	}
