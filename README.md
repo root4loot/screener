@@ -155,7 +155,7 @@ $ recrawl --target "hackerone.com" --hide-status --hide-media | screener --avoid
 ## Example Screenshot
 
 <p align="center">
-<img src="./pkg/screener/assets/screenshot_with_text.png" alt="screenshot example"/>
+<img src="./assets/example.png" alt="screenshot example"/>
 </p>
 
 ## Tips
