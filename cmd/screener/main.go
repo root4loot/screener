@@ -178,6 +178,10 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 			if err := worker(t); err != nil {
 				if errors.Is(err, context.DeadlineExceeded) {
 					log.Warnf("Timeout occurred while capturing screenshot for %s", t)
+				} else if strings.Contains(err.Error(), "HTTPS") {
+					log.Warnf("HTTPS failed for %s: %v", t, err)
+				} else if strings.Contains(err.Error(), "bad status code") {
+					log.Warnf("Screenshot failed for %s due to bad status code", t)
 				} else {
 					log.Errorf("Failed to process target %s: %v", t, err)
 				}
@@ -304,14 +308,12 @@ func (cli *cli) worker(target string) error {
 
 		httpsResult, err := cli.Screener.CaptureScreenshot(parsedURL)
 		if err != nil {
-			log.Debugf("HTTPS failed for %s. Trying HTTP", target)
 			parsedURL.Scheme = "http"
 			httpResult, err := cli.Screener.CaptureScreenshot(parsedURL)
-			if err == nil && !strings.HasPrefix(httpResult.LandingURL, "https://") {
-				result = httpResult
-			} else {
-				result = httpsResult
+			if err != nil {
+				return fmt.Errorf("both HTTPS and HTTP failed for %s: %w", target, err)
 			}
+			result = httpResult
 		} else {
 			result = httpsResult
 		}
@@ -326,8 +328,15 @@ func (cli *cli) worker(target string) error {
 		}
 	}
 
+	if result == nil {
+		return fmt.Errorf("screenshot capture failed for %s: no valid result", target)
+	}
+
+	if result.StatusCode != 200 {
+		return fmt.Errorf("non-200 status code for %s: %d", target, result.StatusCode)
+	}
+
 	if cli.AvoidDuplicates && result.IsSimilarToAny(results, cli.DuplicateThreshold) {
-		log.Infof("Skipping screenshot '%s' (duplicate threshold met: %d%%)", target, cli.DuplicateThreshold)
 		return nil
 	}
 
@@ -347,11 +356,10 @@ func (cli *cli) worker(target string) error {
 
 	fn, err := result.SaveImageToFolder(cli.SaveScreenshotFolder)
 	if err != nil {
-		return fmt.Errorf("error saving screenshot: %w", err)
+		return fmt.Errorf("error saving screenshot to folder %s: %w", fn, err)
 	}
 
 	log.Infof("Screenshot saved to %s", fn)
-
 	return nil
 }
 
