@@ -133,22 +133,22 @@ In the following example, we're using [recrawl](https://github.com/root4loot/rec
 
 ```sh
 $ recrawl --target "hackerone.com" --hide-status --hide-media | screener --avoid-duplicates
-[recrawl] (INF) Hiding status code from output
-[recrawl] (INF) Excluding media [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
-[recrawl] (INF) Notice: Output is being piped. Results will be formatted accordingly.
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_robots.txt.png
-[screener] (INF) Screenshot saved to screenshots/https_www.hackerone.com.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-DsnehVnn.css.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_hacktivity_overview.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_leaderboard_all-time.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_users_sign_in.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_leaderboard.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_opportunities_all_search.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-BQGA2x_6.js.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_constants-06feb5198be5bd0ee51e0df3fedfd6d8ff1605a0e97a34becc0ec8615eda2e26.js.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_css-B6Ng0SnZ.css.png
-[screener] (INF) Screenshot saved to screenshots/https_hackerone.com_assets_static_pages-06310525d168da11de8f7941d231b4cae41abc6c58c72e6b4449e78fbfcb628e.css.png
+[recrawl] (RES) Hiding status code from output
+[recrawl] (RES) Excluding media [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
+[recrawl] (RES) Notice: Output is being piped. Results will be formatted accordingly.
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_robots.txt.png
+[screener] (RES) Screenshot saved to screenshots/https_www.hackerone.com.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-DsnehVnn.css.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_hacktivity_overview.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_leaderboard_all-time.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_users_sign_in.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_leaderboard.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_opportunities_all_search.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-BQGA2x_6.js.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_constants-06feb5198be5bd0ee51e0df3fedfd6d8ff1605a0e97a34becc0ec8615eda2e26.js.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_css-B6Ng0SnZ.css.png
+[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_pages-06310525d168da11de8f7941d231b4cae41abc6c58c72e6b4449e78fbfcb628e.css.png
 ...
 ```
 
