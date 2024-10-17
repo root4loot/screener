@@ -89,6 +89,11 @@ func NewCLIOptions() *cliOptions {
 	}
 }
 
+func NewCLI() *cli {
+	cli := &cli{Screener: screener.NewScreenerWithOptions(screener.NewOptions())}
+	return cli
+}
+
 func init() {
 	log.Init("screener")
 }
@@ -158,33 +163,18 @@ func processDirectTargets(targetURL string, targetChannel chan<- string) {
 	}
 }
 
-func NewCLI() *cli {
-	cli := &cli{Screener: screener.NewScreenerWithOptions(screener.NewOptions())}
-	return cli
-}
-
 func processTarget(worker func(string) error, concurrency int, targetChannel <-chan string, done chan struct{}) {
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
 
 	for target := range targetChannel {
-		log.Debug("Processing CLI target:", target)
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(t string) {
 			defer func() { <-sem }()
 			defer wg.Done()
-
 			if err := worker(t); err != nil {
-				if errors.Is(err, context.DeadlineExceeded) {
-					log.Warnf("Timeout occurred while capturing screenshot for %s", t)
-				} else if strings.Contains(err.Error(), "HTTPS") {
-					log.Warnf("HTTPS failed for %s: %v", t, err)
-				} else if strings.Contains(err.Error(), "bad status code") {
-					log.Warnf("Screenshot failed for %s due to bad status code", t)
-				} else {
-					log.Errorf("Failed to process target %s: %v", t, err)
-				}
+				log.Errorf("Error processing target %s: %v", t, err)
 			}
 		}(target)
 	}
@@ -297,43 +287,44 @@ func (cli *cli) worker(target string) error {
 
 	target, err = urlutil.RemoveDefaultPort(target)
 	if err != nil {
-		return fmt.Errorf("error removing default port for %s: %w", target, err)
+		log.Errorf("Error processing target %s: %v", target, err)
+		return nil
 	}
 
+	urlStr := target
 	if !urlutil.HasScheme(target) {
-		parsedURL, err := url.Parse("https://" + target)
-		if err != nil {
-			return fmt.Errorf("error parsing target %s: %w", target, err)
-		}
+		log.Debugf("No scheme specified for %s: trying HTTPS", target)
+		urlStr = "https://" + target
+	}
 
-		httpsResult, err := cli.Screener.CaptureScreenshot(parsedURL)
-		if err != nil {
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		log.Errorf("Invalid URL %s: %v", urlStr, err)
+		return nil
+	}
+
+	result, err = cli.Screener.CaptureScreenshot(parsedURL)
+	if err != nil {
+		if shouldRetryWithHTTP(err) {
+			log.Debugf("HTTPS failed for %s: %s. Trying HTTP.", target, unwrapError(err))
 			parsedURL.Scheme = "http"
-			httpResult, err := cli.Screener.CaptureScreenshot(parsedURL)
-			if err != nil {
-				return fmt.Errorf("both HTTPS and HTTP failed for %s: %w", target, err)
-			}
-			result = httpResult
-		} else {
-			result = httpsResult
+			result, err = cli.Screener.CaptureScreenshot(parsedURL)
 		}
-	} else {
-		parsedURL, err := url.Parse(target)
-		if err != nil {
-			return fmt.Errorf("error parsing target %s: %w", target, err)
-		}
-		result, err = cli.Screener.CaptureScreenshot(parsedURL)
-		if err != nil {
-			return fmt.Errorf("error capturing screenshot for %s: %w", target, err)
-		}
+	}
+
+	if err != nil {
+		handleCaptureError(target, err)
+		return nil
 	}
 
 	if result == nil {
-		return fmt.Errorf("screenshot capture failed for %s: no valid result", target)
+		log.Warnf("Screenshot capture failed for %s: no valid result", target)
+		return nil
 	}
 
 	if result.StatusCode != 200 {
-		return fmt.Errorf("non-200 status code for %s: %d", target, result.StatusCode)
+		log.Warnf("Could not capture %s: received status code %d", target, result.StatusCode)
+		return nil
 	}
 
 	if cli.AvoidDuplicates && result.IsSimilarToAny(results, cli.DuplicateThreshold) {
@@ -345,24 +336,92 @@ func (cli *cli) worker(target string) error {
 	if !cli.NoImprint {
 		origin, err := urlutil.GetOrigin(result.TargetURL)
 		if err != nil {
-			return fmt.Errorf("error getting origin for %s: %w", result.TargetURL, err)
+			log.Errorf("Error processing result URL %s: %v", result.TargetURL, err)
+			return nil
 		}
 
 		result.Image, err = result.Image.AddTextToImage(origin)
 		if err != nil {
-			return fmt.Errorf("error adding text to image for %s: %w", origin, err)
+			log.Errorf("Error adding text to image for %s: %v", origin, err)
+			return nil
 		}
 	}
 
 	fn, err := result.SaveImageToFolder(cli.SaveScreenshotFolder)
 	if err != nil {
-		return fmt.Errorf("error saving screenshot to folder %s: %w", fn, err)
+		log.Errorf("Error saving screenshot for %s: %v", target, err)
+		return nil
 	}
 
-	log.Infof("Screenshot saved to %s", fn)
+	log.Resultf("Screenshot saved to %s", fn)
 	return nil
 }
 
+func shouldRetryWithHTTP(err error) bool {
+	if isDNSError(err) || isTimeoutError(err) {
+		return false
+	}
+	return true
+}
+
+func isDNSError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errMessage := getFullErrorMessage(err)
+	return strings.Contains(errMessage, "net::ERR_NAME_NOT_RESOLVED") ||
+		strings.Contains(errMessage, "no such host")
+}
+
+func isTimeoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+
+	errMessage := getFullErrorMessage(err)
+	return strings.Contains(errMessage, "context deadline exceeded") ||
+		strings.Contains(errMessage, "timeout")
+}
+
+func getFullErrorMessage(err error) string {
+	var sb strings.Builder
+	for err != nil {
+		sb.WriteString(err.Error())
+		err = errors.Unwrap(err)
+		if err != nil {
+			sb.WriteString(" | ")
+		}
+	}
+	return sb.String()
+}
+
+func unwrapError(err error) string {
+	rootErr := err
+	for {
+		unwrappedErr := errors.Unwrap(rootErr)
+		if unwrappedErr == nil {
+			break
+		}
+		rootErr = unwrappedErr
+	}
+	return rootErr.Error()
+}
+
+func handleCaptureError(target string, err error) {
+	switch {
+	case isDNSError(err):
+		log.Warnf("DNS lookup failed for %s", target)
+	case isTimeoutError(err):
+		log.Debugf("Timeout occurred while capturing screenshot for %s", target)
+	default:
+		log.Errorf("Error capturing screenshot for %s: %s", target, unwrapError(err))
+	}
+}
 func (cli *cli) hasStdin() bool {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
