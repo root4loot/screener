@@ -21,8 +21,7 @@ import (
 const (
 	author  = "@danielantonsen"
 	version = "0.1.0"
-	usage   = `
-Usage:
+	usage   = `USAGE:
   screener [options] (-t <target> | -l <targets.txt>)
 
 INPUT:
@@ -33,13 +32,13 @@ CONFIGURATIONS:
   -c,   --concurrency            number of concurrent operations                         (Default: 10)
   -ad,  --avoid-duplicates       prevent saving duplicate outputs                        (Default: false)
   -dt,  --duplicate-threshold    threshold for similarity percentage (0-100)             (Default: 96)
-                                 consider outputs as duplicates when similarity score is 
-                                 greater than or equal to this value; outputs will not be 
-                                 saved when --avoid-duplicates is enabled.
-  -to,  --timeout                operation timeout                                       (Default: 15 seconds)
+                                 Applicable only when --avoid-duplicates is enabled. Outputs
+                                 with a similarity score greater than or equal to this value
+                                 will be considered duplicates and will not be saved.
+  -to,  --timeout                screenshot timeout                                      (Default: 15 seconds)
   -ua,  --user-agent             specify user agent                                      (Default: Chrome UA)
-  -uh,  --use-http2              enable HTTP2                                            (Default: false)
-  -nr,  --ignore-redirects       disable following redirects                             (Default: false)
+  -uh,  --use-http2              use HTTP2                                               (Default: false)
+  -nr,  --ignore-redirects       do not follow redirects                                 (Default: false)
   -cw,  --capture-width          output width                                            (Default: 1366)
   -ch,  --capture-height         output height                                           (Default: 768)
   -cf,  --capture-full           capture entire content                                  (Default: false)
@@ -49,9 +48,9 @@ CONFIGURATIONS:
   -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: false)
 
 OUTPUT:
-  -o,   --outfolder              save outputs to specified folder                        (Default: ./outputs)
+  -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
   -nt,  --no-text                do not add text to output images                        (Default: false)
-  -v,   --debug                  enable debug mode
+        --debug                  enable debug mode
         --version                display version
 `
 )
@@ -187,7 +186,6 @@ func (cli *cli) parseFlags() {
 	var help, ver, debug bool
 	var ignoreStatusCodes string
 
-	// Initialize default options
 	options := NewCLIOptions()
 	captureOptions := screener.NewOptions()
 
@@ -234,7 +232,6 @@ func (cli *cli) parseFlags() {
 	flag.BoolVar(&cli.NoImprint, "no-text", false, "")
 	flag.BoolVar(&cli.NoImprint, "nt", false, "")
 	flag.BoolVar(&debug, "debug", false, "")
-	flag.BoolVar(&debug, "v", false, "")
 	flag.BoolVar(&help, "help", false, "")
 	flag.BoolVar(&help, "h", false, "")
 	flag.BoolVar(&ver, "version", false, "")
