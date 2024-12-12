@@ -21,6 +21,6 @@ require (
 	github.com/glaslos/ssdeep v0.3.3
 	github.com/go-rod/rod v0.114.5
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/root4loot/goutils v0.0.0-20241004172847-d8762bb7d047
+	github.com/root4loot/goutils v0.0.0-20241212144816-16652e3b0139
 	golang.org/x/image v0.14.0
 )
