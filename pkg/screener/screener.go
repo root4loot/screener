@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"image"
 	"image/color"
 	"image/png"
 	"net/url"
@@ -290,15 +289,25 @@ func (result Result) IsSimilarToAny(results []Result, similarityThreshold int) b
 }
 
 // AddTextToImage adds text to bottom of the image
-func (imgB Image) AddTextToImage(text string) ([]byte, error) {
-	img, _, err := image.Decode(bytes.NewReader(imgB))
+func (imgB Image) AddTextToImage(rawURL string) ([]byte, error) {
+	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %w", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
-	printURL, err := getPrintableURL(text, 159)
+	host := parsedURL.Host
+	if strings.Contains(host, ":") {
+		hostWithoutPort, port, _ := strings.Cut(host, ":")
+		if (parsedURL.Scheme == "http" && port == "80") || (parsedURL.Scheme == "https" && port == "443") {
+			host = hostWithoutPort
+		}
+	}
+
+	printURL := parsedURL.Scheme + "://" + host
+
+	img, err := png.Decode(bytes.NewReader(imgB))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}
 
 	const padding = 20
@@ -328,17 +337,6 @@ func (imgB Image) AddTextToImage(text string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-func getPrintableURL(rawURL string, maxLength int) (string, error) {
-	parsedURL, err := url.Parse(rawURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse URL: %w", err)
-	}
-	if len(parsedURL.String()) > maxLength {
-		return parsedURL.Scheme + "://" + parsedURL.Host, nil
-	}
-	return parsedURL.String(), nil
 }
 
 //go:embed assets/Roboto-Medium.ttf
