@@ -65,20 +65,11 @@ type cli struct {
 	AvoidDuplicates      bool
 	DuplicateThreshold   int
 	Debug                bool
-}
-type cliOptions struct {
-	TargetURL            string
-	Concurrency          int
-	Infile               string
-	SaveScreenshotFolder string
-	NoImprint            bool
-	AvoidDuplicates      bool
-	DuplicateThreshold   int
 	IgnoreStatusCodes    []int
 }
 
-func NewCLIOptions() *cliOptions {
-	return &cliOptions{
+func NewCLIOptions() *cli {
+	return &cli{
 		Concurrency:          10,
 		SaveScreenshotFolder: "./screenshots",
 		NoImprint:            false,
@@ -100,6 +91,7 @@ func init() {
 func main() {
 	cli := NewCLI()
 	cli.parseFlags()
+
 	targetChannel := make(chan string)
 	done := make(chan struct{})
 
