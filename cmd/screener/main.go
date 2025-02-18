@@ -282,23 +282,37 @@ func (cli *cli) worker(rawURL string) error {
 	var err error
 	var result *screener.Result
 
+	// Remove any trailing slash for cleaner logging.
+	rawURL = strings.TrimSuffix(rawURL, "/")
+
+	// If no scheme, assume HTTPS and remove any default HTTP ports.
 	if !urlutil.HasScheme(rawURL) {
-		log.Debugf("No scheme specified for %s: Defaulting to HTTPS", rawURL)
-		rawURL = urlutil.EnsureHTTPS(rawURL)
+		log.Debugf("No scheme specified for %q: defaulting to HTTPS", rawURL)
+		rawURL = "https://" + rawURL
 	}
 
+	// Parse the URL
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		log.Errorf("Invalid URL %s: %v", rawURL, err)
+		log.Errorf("Invalid URL %q: %v", rawURL, err)
 		return nil
 	}
 
+	// Remove the default port **immediately after parsing**
 	urlutil.RemoveDefaultPort(parsedURL)
+
+	// Ensure HTTPS URLs are not using port 80
+	if parsedURL.Scheme == "https" && parsedURL.Port() == "80" {
+		log.Debugf("Removing incorrect port 80 from HTTPS URL: %q", parsedURL.String())
+		parsedURL.Host = parsedURL.Hostname() // Strip the port
+	}
+
+	cleanURL := parsedURL.String()
 
 	result, err = cli.Screener.CaptureScreenshot(parsedURL)
 	if err != nil {
 		if shouldRetryWithHTTP(err) {
-			log.Debugf("HTTPS failed for %s: %s. Trying HTTP.", rawURL, unwrapError(err))
+			log.Debugf("HTTPS failed for %q: %s. Retrying with HTTP.", rawURL, unwrapError(err))
 			parsedURL.Scheme = "http"
 			result, err = cli.Screener.CaptureScreenshot(parsedURL)
 		}
@@ -310,12 +324,12 @@ func (cli *cli) worker(rawURL string) error {
 	}
 
 	if result == nil {
-		log.Warnf("Screenshot capture failed for %s: no valid result", parsedURL.String())
+		log.Warnf("Screenshot capture failed for %q: no valid result", cleanURL)
 		return nil
 	}
 
 	if result.StatusCode != 200 {
-		log.Warnf("Could not capture %s: received status code %d", parsedURL.String(), result.StatusCode)
+		log.Warnf("Screenshot failed for %q: server responded with HTTP %d", cleanURL, result.StatusCode)
 		return nil
 	}
 
@@ -328,24 +342,24 @@ func (cli *cli) worker(rawURL string) error {
 	if !cli.NoImprint {
 		origin, err := urlutil.GetOrigin(result.TargetURL)
 		if err != nil {
-			log.Errorf("Error processing result URL %s: %v", result.TargetURL, err)
+			log.Errorf("Error processing result URL %q: %v", result.TargetURL, err)
 			return nil
 		}
 
 		result.Image, err = result.Image.AddTextToImage(origin)
 		if err != nil {
-			log.Errorf("Error adding text to image for %s: %v", origin, err)
+			log.Errorf("Error adding text to image for %q: %v", origin, err)
 			return nil
 		}
 	}
 
 	fn, err := result.SaveImageToFolder(cli.SaveScreenshotFolder)
 	if err != nil {
-		log.Errorf("Error saving screenshot for %s: %v", rawURL, err)
+		log.Errorf("Error saving screenshot for %q: %v", rawURL, err)
 		return nil
 	}
 
-	log.Resultf("Screenshot saved to %s", fn)
+	log.Resultf("Screenshot saved: %q", fn)
 	return nil
 }
 
