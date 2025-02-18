@@ -282,10 +282,7 @@ func (cli *cli) worker(rawURL string) error {
 	var err error
 	var result *screener.Result
 
-	// Remove any trailing slash for cleaner logging.
 	rawURL = strings.TrimSuffix(rawURL, "/")
-
-	// If no scheme, assume HTTPS and remove any default HTTP ports.
 	if !urlutil.HasScheme(rawURL) {
 		log.Debugf("No scheme specified for %q: defaulting to HTTPS", rawURL)
 		rawURL = "https://" + rawURL
@@ -298,13 +295,11 @@ func (cli *cli) worker(rawURL string) error {
 		return nil
 	}
 
-	// Remove the default port **immediately after parsing**
 	urlutil.RemoveDefaultPort(parsedURL)
 
-	// Ensure HTTPS URLs are not using port 80
 	if parsedURL.Scheme == "https" && parsedURL.Port() == "80" {
 		log.Debugf("Removing incorrect port 80 from HTTPS URL: %q", parsedURL.String())
-		parsedURL.Host = parsedURL.Hostname() // Strip the port
+		parsedURL.Host = parsedURL.Hostname()
 	}
 
 	cleanURL := parsedURL.String()
@@ -312,7 +307,7 @@ func (cli *cli) worker(rawURL string) error {
 	result, err = cli.Screener.CaptureScreenshot(parsedURL)
 	if err != nil {
 		if shouldRetryWithHTTP(err) {
-			log.Debugf("HTTPS failed for %q: %s. Retrying with HTTP.", rawURL, unwrapError(err))
+			log.Debugf("HTTPS failed %q: %s. Retrying with HTTP.", rawURL, unwrapError(err))
 			parsedURL.Scheme = "http"
 			result, err = cli.Screener.CaptureScreenshot(parsedURL)
 		}
@@ -324,12 +319,12 @@ func (cli *cli) worker(rawURL string) error {
 	}
 
 	if result == nil {
-		log.Warnf("Screenshot capture failed for %q: no valid result", cleanURL)
+		log.Warnf("Screenshot capture failed %q: no valid result", cleanURL)
 		return nil
 	}
 
 	if result.StatusCode != 200 {
-		log.Warnf("Screenshot failed for %q: server responded with HTTP %d", cleanURL, result.StatusCode)
+		log.Warnf("Screenshot failed %q: server responded with HTTP %d", cleanURL, result.StatusCode)
 		return nil
 	}
 
@@ -421,7 +416,7 @@ func unwrapError(err error) string {
 func handleCaptureError(target string, err error) {
 	switch {
 	case isDNSError(err):
-		log.Warnf("DNS lookup failed for %s", target)
+		log.Warnf("DNS lookup failed %s", target)
 	case isTimeoutError(err):
 		log.Debugf("Timeout occurred while capturing screenshot for %s", target)
 	default:
