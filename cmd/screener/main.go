@@ -278,49 +278,44 @@ func (cli *cli) parseFlags() {
 
 var results []screener.Result
 
-func (cli *cli) worker(target string) error {
+func (cli *cli) worker(rawURL string) error {
 	var err error
 	var result *screener.Result
 
-	target, err = urlutil.RemoveDefaultPort(target)
+	if !urlutil.HasScheme(rawURL) {
+		log.Debugf("No scheme specified for %s: Defaulting to HTTPS", rawURL)
+		rawURL = urlutil.EnsureHTTPS(rawURL)
+	}
+
+	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		log.Errorf("Error processing target %s: %v", target, err)
+		log.Errorf("Invalid URL %s: %v", rawURL, err)
 		return nil
 	}
 
-	urlStr := target
-	if !urlutil.HasScheme(target) {
-		log.Debugf("No scheme specified for %s: trying HTTPS", target)
-		urlStr = "https://" + target
-	}
-
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		log.Errorf("Invalid URL %s: %v", urlStr, err)
-		return nil
-	}
+	urlutil.RemoveDefaultPort(parsedURL)
 
 	result, err = cli.Screener.CaptureScreenshot(parsedURL)
 	if err != nil {
 		if shouldRetryWithHTTP(err) {
-			log.Debugf("HTTPS failed for %s: %s. Trying HTTP.", target, unwrapError(err))
+			log.Debugf("HTTPS failed for %s: %s. Trying HTTP.", rawURL, unwrapError(err))
 			parsedURL.Scheme = "http"
 			result, err = cli.Screener.CaptureScreenshot(parsedURL)
 		}
 	}
 
 	if err != nil {
-		handleCaptureError(target, err)
+		handleCaptureError(rawURL, err)
 		return nil
 	}
 
 	if result == nil {
-		log.Warnf("Screenshot capture failed for %s: no valid result", target)
+		log.Warnf("Screenshot capture failed for %s: no valid result", parsedURL.String())
 		return nil
 	}
 
 	if result.StatusCode != 200 {
-		log.Warnf("Could not capture %s: received status code %d", target, result.StatusCode)
+		log.Warnf("Could not capture %s: received status code %d", parsedURL.String(), result.StatusCode)
 		return nil
 	}
 
@@ -346,7 +341,7 @@ func (cli *cli) worker(target string) error {
 
 	fn, err := result.SaveImageToFolder(cli.SaveScreenshotFolder)
 	if err != nil {
-		log.Errorf("Error saving screenshot for %s: %v", target, err)
+		log.Errorf("Error saving screenshot for %s: %v", rawURL, err)
 		return nil
 	}
 
