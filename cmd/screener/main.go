@@ -178,8 +178,10 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 		}(target)
 	}
 
-	wg.Wait()
-	close(done)
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 }
 
 func (cli *cli) parseFlags() {
