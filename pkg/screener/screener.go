@@ -57,6 +57,7 @@ type captureOptions struct {
 	IgnoreRedirects          bool   // Do not follow redirects
 	IgnoreStatusCodes        []int  // Status codes to ignore
 	CaptureFull              bool   // Take a full-page screenshot
+	ScreenshotErrors         bool   // Capture screenshots even if there are errors
 }
 
 // NewOptions returns an CaptureOptions struct initialized with default values.
@@ -72,6 +73,7 @@ func NewOptions() captureOptions {
 		IgnoreRedirects:          false,
 		CaptureFull:              false,
 		UserAgent:                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+		IgnoreStatusCodes:        []int{204, 301, 302, 304, 401, 407},
 	}
 }
 
@@ -175,7 +177,7 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	wait := page.WaitEvent(&e)
 
 	if err := page.Context(ctx).Navigate(captureURL); err != nil {
-		return nil, fmt.Errorf("error navigating to %s: %w", captureURL, err)
+		log.Warnf("Navigation failed for %q: %v, attempting screenshot anyway", captureURL, err)
 	}
 
 	wait()
@@ -201,8 +203,15 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 		return nil, fmt.Errorf("error capturing screenshot for %s: %w", captureURL, err)
 	}
 
+	result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
+	if err != nil {
+		log.Warnf("Screenshot attempt failed for %q: %v", captureURL, err)
+	} else {
+		log.Infof("Captured screenshot for %q even after error", captureURL)
+	}
+
 	if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
-		log.Warnf("Ignoring %s as it returned status code %d", captureURL, e.Response.Status)
+		log.Warnf("Ignoring %q as it returned status code %d", captureURL, e.Response.Status)
 		return nil, nil
 	}
 

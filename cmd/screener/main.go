@@ -45,7 +45,7 @@ CONFIGURATIONS:
   -dc,  --delay-capture          delay before operation (seconds)                        (Default: 2)
   -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
-  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: false)
+  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)

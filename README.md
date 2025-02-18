@@ -26,6 +26,7 @@
 - Turn off HTTP/2 if needed.
 - Use a custom user agent.
 - Add URL to images.
+- Also screenshot 4xx/5xx error pages
 
 ## Installation
 
@@ -62,7 +63,7 @@ CONFIGURATIONS:
                                  will be considered duplicates and will not be saved.
   -to,  --timeout                screenshot timeout                                      (Default: 15 seconds)
   -ua,  --user-agent             specify user agent                                      (Default: Chrome UA)
-  -uh,  --use-http2              enable HTTP2                                            (Default: false)
+  -uh,  --use-http2              use HTTP2                                               (Default: false)
   -nr,  --ignore-redirects       do not follow redirects                                 (Default: false)
   -cw,  --capture-width          output width                                            (Default: 1366)
   -ch,  --capture-height         output height                                           (Default: 768)
@@ -70,7 +71,7 @@ CONFIGURATIONS:
   -dc,  --delay-capture          delay before operation (seconds)                        (Default: 2)
   -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
-  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: false)
+  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
