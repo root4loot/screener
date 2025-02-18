@@ -348,7 +348,7 @@ func (cli *cli) worker(rawURL string) error {
 		return nil
 	}
 
-	log.Resultf("Screenshot saved: %q", fn)
+	log.Resultf("Screenshot saved %q", fn)
 	return nil
 }
 

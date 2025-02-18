@@ -88,7 +88,7 @@ Capture a single target. If you don't specify http or https, it defaults to http
 
 ```sh
 $ screener -t example.com
-[screener] (INF) Screenshot saved to screenshots/https_example.com.png
+[screener] (INF) Screenshot saved screenshots/https_example.com.png
 ```
 
 ### Multiple Targets
@@ -109,24 +109,24 @@ Note that targets can be IP, domain, or full URL.
 
 ```sh
 $ screener -l targets.txt
-[screener] (RES) Screenshot saved to screenshots/http_example.com.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_sitemap.xml.png
-[screener] (RES) Screenshot saved to screenshots/https_scanme.sh.png
-[screener] (RES) Screenshot saved to screenshots/https_142.250.74.110.png
-[screener] (RES) Screenshot saved to screenshots/https_google.com.png
-[screener] (RES) Screenshot saved to screenshots/https_bugcrowd.com.png
+[screener] (RES) Screenshot saved "screenshots/https_google.com.png"
+[screener] (RES) Screenshot saved "screenshots/https_example.com.png"
+[screener] (RES) Screenshot saved "screenshots/https_142.250.74.110.png"
+[screener] (RES) Screenshot saved "screenshots/https_scanme.sh.png"
+[screener] (RES) Screenshot saved "screenshots/https_hackerone.com_sitemap.xml.png"
+[screener] (RES) Screenshot saved "screenshots/https_bugcrowd.com.png"
 ```
 
 You may also "stream" targets to screener, capturing screenshots as they are received:
 
 ```sh
 $ cat targets.txt | screener
-[screener] (RES) Screenshot saved to screenshots/https_142.250.74.110.png
-[screener] (RES) Screenshot saved to screenshots/https_google.com.png
-[screener] (RES) Screenshot saved to screenshots/https_bugcrowd.com.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_sitemap.xml.png
-[screener] (RES) Screenshot saved to screenshots/http_example.com.png
-[screener] (RES) Screenshot saved to screenshots/https_scanme.sh.png
+[screener] (RES) Screenshot saved screenshots/https_142.250.74.110.png
+[screener] (RES) Screenshot saved screenshots/https_google.com.png
+[screener] (RES) Screenshot saved screenshots/https_bugcrowd.com.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_sitemap.xml.png
+[screener] (RES) Screenshot saved screenshots/http_example.com.png
+[screener] (RES) Screenshot saved screenshots/https_scanme.sh.png
 ```
 
 When dealing with many same-site URLs, use the `-su` or `--save-unique` flags to avoid saving multiple copies of the same screenshot. This makes it easier to sort through your screenshots!
@@ -137,19 +137,19 @@ $ recrawl --target "hackerone.com" --hide-status --hide-media | screener --avoid
 [recrawl] (RES) Hiding status code from output
 [recrawl] (RES) Excluding media [.png .jpg .jpeg .woff .woff2 .ttf .eot .svg .gif .ico .webp .mp4 .webm .mp3 .wav .flac .aac .ogg .m4a .flv .avi .mov .wmv .swf .mkv .m4v .3gp .3g2]
 [recrawl] (RES) Notice: Output is being piped. Results will be formatted accordingly.
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_robots.txt.png
-[screener] (RES) Screenshot saved to screenshots/https_www.hackerone.com.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-DsnehVnn.css.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_hacktivity_overview.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_leaderboard_all-time.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_users_sign_in.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_leaderboard.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_opportunities_all_search.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_js-BQGA2x_6.js.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_constants-06feb5198be5bd0ee51e0df3fedfd6d8ff1605a0e97a34becc0ec8615eda2e26.js.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_main_css-B6Ng0SnZ.css.png
-[screener] (RES) Screenshot saved to screenshots/https_hackerone.com_assets_static_pages-06310525d168da11de8f7941d231b4cae41abc6c58c72e6b4449e78fbfcb628e.css.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_robots.txt.png
+[screener] (RES) Screenshot saved screenshots/https_www.hackerone.com.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_assets_static_main_js-DsnehVnn.css.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_hacktivity_overview.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_leaderboard_all-time.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_users_sign_in.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_leaderboard.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_opportunities_all_search.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_assets_static_main_js-BQGA2x_6.js.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_assets_constants-06feb5198be5bd0ee51e0df3fedfd6d8ff1605a0e97a34becc0ec8615eda2e26.js.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_assets_static_main_css-B6Ng0SnZ.css.png
+[screener] (RES) Screenshot saved screenshots/https_hackerone.com_assets_static_pages-06310525d168da11de8f7941d231b4cae41abc6c58c72e6b4449e78fbfcb628e.css.png
 ...
 ```
 

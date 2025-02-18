@@ -64,7 +64,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Screenshot saved to %s\n", filename)
+		fmt.Printf("Saved screenshot %s\n", filename)
 		results = append(results, *result)
 	}
 }

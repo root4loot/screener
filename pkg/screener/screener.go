@@ -207,7 +207,7 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	if err != nil {
 		log.Warnf("Screenshot attempt failed for %q: %v", captureURL, err)
 	} else {
-		log.Infof("Captured screenshot for %q even after error", captureURL)
+		log.Infof("Captured screenshot %q", captureURL)
 	}
 
 	if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
