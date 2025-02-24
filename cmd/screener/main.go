@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/root4loot/goutils/fileutil"
 	"github.com/root4loot/goutils/log"
@@ -157,6 +158,9 @@ func processDirectTargets(targetURL string, targetChannel chan<- string) {
 func processTarget(worker func(string) error, concurrency int, targetChannel <-chan string, done chan struct{}) {
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
+	timeout := time.AfterFunc(16*time.Second, func() {
+		close(done)
+	})
 
 	for target := range targetChannel {
 		sem <- struct{}{}
@@ -167,15 +171,16 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 			if err := worker(t); err != nil {
 				log.Errorf("Error processing target %s: %v", t, err)
 			}
+			timeout.Reset(16 * time.Second)
 		}(target)
 	}
 
 	go func() {
 		wg.Wait()
+		timeout.Stop()
 		close(done)
 	}()
 }
-
 func (cli *cli) parseFlags() {
 	var help, ver, debug bool
 	var ignoreStatusCodes string
