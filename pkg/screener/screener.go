@@ -114,13 +114,14 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 
     captureURL := parsedURL.String()
     result.TargetURL = captureURL
+    contextTag := fmt.Sprintf("[capture=%s]", captureURL)
 
 	if parsedURL.Scheme == "" {
 		return nil, fmt.Errorf("no URL scheme provided; expected http or https")
 	}
 
     if s.CaptureOptions.DelayBetweenCapture > 0 {
-        log.Debugf("Delay between captures: waiting %ds", s.CaptureOptions.DelayBetweenCapture)
+        log.Debugf("%s Delay between captures: waiting %ds", contextTag, s.CaptureOptions.DelayBetweenCapture)
         time.Sleep(time.Duration(s.CaptureOptions.DelayBetweenCapture) * time.Second)
     }
 
@@ -130,17 +131,16 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	}
 
     if s.isVisited(captureURL) {
-        log.Warnf("Skipping %s as it has already been visited", captureURL)
+        log.Warnf("%s Skipping %s as it has already been visited", contextTag, captureURL)
         return nil, nil
     } else {
-        log.Debugf("Attempting capture on %s", captureURL)
+        log.Debugf("%s Attempting capture on %s", contextTag, captureURL)
     }
 
     ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.CaptureOptions.Timeout)*time.Second)
     defer cancel()
 
     path, _ := launcher.LookPath()
-    log.Debugf("Launching browser: bin=%q headless=%t sandbox=%t http2=%t certErr=%t", path, true, false, s.CaptureOptions.UseHTTP2, s.CaptureOptions.RespectCertificateErrors)
 
     l := launcher.New().
         Headless(true).
@@ -160,12 +160,10 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	}
 
     browserURL := l.MustLaunch()
-    log.Debugf("Browser launched at %s", browserURL)
     browser := rod.New().ControlURL(browserURL).MustConnect()
     defer browser.MustClose()
 
     page := browser.MustPage("")
-    log.Debugf("New page created")
 
 	if s.CaptureOptions.CaptureWidth != 0 && s.CaptureOptions.CaptureHeight != 0 {
 		viewport := &proto.EmulationSetDeviceMetricsOverride{
@@ -179,19 +177,19 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
         if err != nil {
             log.Fatalf("Error setting viewport: %v", err)
         }
-        log.Debugf("Viewport set to %dx%d", s.CaptureOptions.CaptureWidth, s.CaptureOptions.CaptureHeight)
+        // viewport set
     }
 
     var e proto.NetworkResponseReceived
     wait := page.WaitEvent(&e)
 
-    log.Debugf("Navigating to %q", captureURL)
+    log.Debugf("%s Navigating to %q", contextTag, captureURL)
     if err := page.Context(ctx).Navigate(captureURL); err != nil {
-        log.Warnf("Navigation failed for %q: %v, attempting screenshot anyway", captureURL, err)
+        log.Warnf("%s Navigation failed for %q: %v, attempting screenshot anyway", contextTag, captureURL, err)
     }
 
     // Wait for the first network response or timeout via context
-    log.Debugf("Waiting for first network response event")
+    log.Debugf("%s Waiting for first network response event", contextTag)
     done := make(chan struct{})
     go func() {
         defer close(done)
@@ -199,31 +197,31 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
     }()
     select {
     case <-done:
-        log.Debugf("Received network response: status=%d url=%q", e.Response.Status, e.Response.URL)
+        log.Debugf("%s Received network response: status=%d url=%q", contextTag, e.Response.Status, e.Response.URL)
     case <-ctx.Done():
-        log.Warnf("Timed out waiting for network response for %q", captureURL)
+        log.Warnf("%s Timed out waiting for network response for %q", contextTag, captureURL)
     }
 
     if s.CaptureOptions.IgnoreRedirects && page.MustInfo().URL != captureURL {
-        log.Warn("Not following redirects as --ignore-redirects flag is set")
+        log.Warnf("%s Not following redirects as --ignore-redirects flag is set", contextTag)
         return nil, nil
     }
 
-    log.Debugf("Waiting for page load")
+    log.Debugf("%s Waiting for page load", contextTag)
     if err := page.Context(ctx).WaitLoad(); err != nil {
         return nil, fmt.Errorf("%s timed out after %v: %w", time.Duration(s.CaptureOptions.Timeout)*time.Second, captureURL, err)
     }
-    log.Debugf("Page load completed: finalURL=%q", page.MustInfo().URL)
+    log.Debugf("%s Page load completed: finalURL=%q", contextTag, page.MustInfo().URL)
 
     if s.CaptureOptions.DelayBeforeCapture > 0 {
-        log.Debugf("Delay before capture: waiting %ds", s.CaptureOptions.DelayBeforeCapture)
+        log.Debugf("%s Delay before capture: waiting %ds", contextTag, s.CaptureOptions.DelayBeforeCapture)
         time.Sleep(time.Duration(s.CaptureOptions.DelayBeforeCapture) * time.Second)
     }
 
 	result.LandingURL = page.MustInfo().URL
 
 	var err error
-    log.Debugf("Capturing screenshot (full=%t)", s.CaptureOptions.CaptureFull)
+    log.Debugf("%s Capturing screenshot (full=%t)", contextTag, s.CaptureOptions.CaptureFull)
     result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
     if err != nil {
         return nil, fmt.Errorf("error capturing screenshot for %s: %w", captureURL, err)
@@ -232,13 +230,13 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
     // Second attempt (existing behavior)
     result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
     if err != nil {
-        log.Warnf("Screenshot attempt failed for %q: %v", captureURL, err)
+        log.Warnf("%s Screenshot attempt failed for %q: %v", contextTag, captureURL, err)
     } else {
-        log.Infof("Captured screenshot %q", captureURL)
+        log.Infof("%s Captured screenshot %q", contextTag, captureURL)
     }
 
     if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
-        log.Warnf("Ignoring %q as it returned status code %d", captureURL, e.Response.Status)
+        log.Warnf("%s Ignoring %q as it returned status code %d", contextTag, captureURL, e.Response.Status)
         return nil, nil
     }
 
