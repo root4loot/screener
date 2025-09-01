@@ -27,10 +27,10 @@ import (
 )
 
 type Screener struct {
-	Debug          bool
-	CaptureOptions captureOptions
-	visited        map[string]bool
-	mutex          sync.Mutex
+    Debug          bool
+    CaptureOptions captureOptions
+    visited        map[string]bool
+    mutex          sync.Mutex
 }
 
 // Result contains the result of a screenshot capture.
@@ -110,58 +110,62 @@ func Init() {
 
 // CaptureScreenshot takes a screenshot of the provided URL and returns the result.
 func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
-	var result = &Result{}
+    var result = &Result{}
 
-	captureURL := parsedURL.String()
-	result.TargetURL = captureURL
+    captureURL := parsedURL.String()
+    result.TargetURL = captureURL
 
 	if parsedURL.Scheme == "" {
 		return nil, fmt.Errorf("no URL scheme provided; expected http or https")
 	}
 
-	if s.CaptureOptions.DelayBetweenCapture > 0 {
-		time.Sleep(time.Duration(s.CaptureOptions.DelayBetweenCapture) * time.Second)
-	}
+    if s.CaptureOptions.DelayBetweenCapture > 0 {
+        log.Debugf("Delay between captures: waiting %ds", s.CaptureOptions.DelayBetweenCapture)
+        time.Sleep(time.Duration(s.CaptureOptions.DelayBetweenCapture) * time.Second)
+    }
 
 	if !strings.HasSuffix(parsedURL.Path, "/") && !urlutil.HasFileExtension(parsedURL.Path) {
 		parsedURL.Path += "/"
 		captureURL = parsedURL.String()
 	}
 
-	if s.isVisited(captureURL) {
-		log.Warnf("Skipping %s as it has already been visited", captureURL)
-		return nil, nil
-	} else {
-		log.Debugf("Attempting capture on %s", captureURL)
-	}
+    if s.isVisited(captureURL) {
+        log.Warnf("Skipping %s as it has already been visited", captureURL)
+        return nil, nil
+    } else {
+        log.Debugf("Attempting capture on %s", captureURL)
+    }
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.CaptureOptions.Timeout)*time.Second)
-	defer cancel()
+    ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.CaptureOptions.Timeout)*time.Second)
+    defer cancel()
 
-	path, _ := launcher.LookPath()
+    path, _ := launcher.LookPath()
+    log.Debugf("Launching browser: bin=%q headless=%t sandbox=%t http2=%t certErr=%t", path, true, false, s.CaptureOptions.UseHTTP2, s.CaptureOptions.RespectCertificateErrors)
 
-	l := launcher.New().
-		Headless(true).
-		Bin(path).
-		NoSandbox(true)
+    l := launcher.New().
+        Headless(true).
+        Bin(path).
+        NoSandbox(true)
 
 	if s.CaptureOptions.UserAgent != "" {
 		l.Set("user-agent", s.CaptureOptions.UserAgent)
 	}
 
-	if !s.CaptureOptions.RespectCertificateErrors {
-		l.Set("ignore-certificate-errors", "true")
-	}
+    if !s.CaptureOptions.RespectCertificateErrors {
+        l.Set("ignore-certificate-errors", "true")
+    }
 
 	if !s.CaptureOptions.UseHTTP2 {
 		l.Set("disable-http2", "true")
 	}
 
-	browserURL := l.MustLaunch()
-	browser := rod.New().ControlURL(browserURL).MustConnect()
-	defer browser.MustClose()
+    browserURL := l.MustLaunch()
+    log.Debugf("Browser launched at %s", browserURL)
+    browser := rod.New().ControlURL(browserURL).MustConnect()
+    defer browser.MustClose()
 
-	page := browser.MustPage("")
+    page := browser.MustPage("")
+    log.Debugf("New page created")
 
 	if s.CaptureOptions.CaptureWidth != 0 && s.CaptureOptions.CaptureHeight != 0 {
 		viewport := &proto.EmulationSetDeviceMetricsOverride{
@@ -171,58 +175,77 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 			Mobile:            false,
 		}
 
-		err := page.SetViewport(viewport)
-		if err != nil {
-			log.Fatalf("Error setting viewport: %v", err)
-		}
-	}
+        err := page.SetViewport(viewport)
+        if err != nil {
+            log.Fatalf("Error setting viewport: %v", err)
+        }
+        log.Debugf("Viewport set to %dx%d", s.CaptureOptions.CaptureWidth, s.CaptureOptions.CaptureHeight)
+    }
 
-	var e proto.NetworkResponseReceived
-	wait := page.WaitEvent(&e)
+    var e proto.NetworkResponseReceived
+    wait := page.WaitEvent(&e)
 
-	if err := page.Context(ctx).Navigate(captureURL); err != nil {
-		log.Warnf("Navigation failed for %q: %v, attempting screenshot anyway", captureURL, err)
-	}
+    log.Debugf("Navigating to %q", captureURL)
+    if err := page.Context(ctx).Navigate(captureURL); err != nil {
+        log.Warnf("Navigation failed for %q: %v, attempting screenshot anyway", captureURL, err)
+    }
 
-	wait()
+    // Wait for the first network response or timeout via context
+    log.Debugf("Waiting for first network response event")
+    done := make(chan struct{})
+    go func() {
+        defer close(done)
+        wait()
+    }()
+    select {
+    case <-done:
+        log.Debugf("Received network response: status=%d url=%q", e.Response.Status, e.Response.URL)
+    case <-ctx.Done():
+        log.Warnf("Timed out waiting for network response for %q", captureURL)
+    }
 
-	if s.CaptureOptions.IgnoreRedirects && page.MustInfo().URL != captureURL {
-		log.Warn("Not following redirects as --ignore-redirects flag is set")
-		return nil, nil
-	}
+    if s.CaptureOptions.IgnoreRedirects && page.MustInfo().URL != captureURL {
+        log.Warn("Not following redirects as --ignore-redirects flag is set")
+        return nil, nil
+    }
 
-	if err := page.Context(ctx).WaitLoad(); err != nil {
-		return nil, fmt.Errorf("%s timed out after %v: %w", time.Duration(s.CaptureOptions.Timeout)*time.Second, captureURL, err)
-	}
+    log.Debugf("Waiting for page load")
+    if err := page.Context(ctx).WaitLoad(); err != nil {
+        return nil, fmt.Errorf("%s timed out after %v: %w", time.Duration(s.CaptureOptions.Timeout)*time.Second, captureURL, err)
+    }
+    log.Debugf("Page load completed: finalURL=%q", page.MustInfo().URL)
 
-	if s.CaptureOptions.DelayBeforeCapture > 0 {
-		time.Sleep(time.Duration(s.CaptureOptions.DelayBeforeCapture) * time.Second)
-	}
+    if s.CaptureOptions.DelayBeforeCapture > 0 {
+        log.Debugf("Delay before capture: waiting %ds", s.CaptureOptions.DelayBeforeCapture)
+        time.Sleep(time.Duration(s.CaptureOptions.DelayBeforeCapture) * time.Second)
+    }
 
 	result.LandingURL = page.MustInfo().URL
 
 	var err error
-	result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error capturing screenshot for %s: %w", captureURL, err)
-	}
+    log.Debugf("Capturing screenshot (full=%t)", s.CaptureOptions.CaptureFull)
+    result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
+    if err != nil {
+        return nil, fmt.Errorf("error capturing screenshot for %s: %w", captureURL, err)
+    }
 
-	result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
-	if err != nil {
-		log.Warnf("Screenshot attempt failed for %q: %v", captureURL, err)
-	} else {
-		log.Infof("Captured screenshot %q", captureURL)
-	}
+    // Second attempt (existing behavior)
+    result.Image, err = page.Screenshot(s.CaptureOptions.CaptureFull, nil)
+    if err != nil {
+        log.Warnf("Screenshot attempt failed for %q: %v", captureURL, err)
+    } else {
+        log.Infof("Captured screenshot %q", captureURL)
+    }
 
-	if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
-		log.Warnf("Ignoring %q as it returned status code %d", captureURL, e.Response.Status)
-		return nil, nil
-	}
+    if sliceutil.Contains(s.CaptureOptions.IgnoreStatusCodes, e.Response.Status) {
+        log.Warnf("Ignoring %q as it returned status code %d", captureURL, e.Response.Status)
+        return nil, nil
+    }
 
-	result.StatusCode = e.Response.Status
-	s.addVisited(captureURL)
+    result.StatusCode = e.Response.Status
+    s.addVisited(captureURL)
 
-	return result, nil
+    return result, nil
 }
 
 // SaveImageToFolder saves the image to the provided path.

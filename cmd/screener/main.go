@@ -245,6 +245,8 @@ func (cli *cli) parseFlags() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	cli.Screener.SetDebug(debug)
+
 	if help {
 		fmt.Print(usage)
 		os.Exit(0)
