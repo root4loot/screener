@@ -115,6 +115,10 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 	captureURL := parsedURL.String()
 	result.TargetURL = captureURL
 
+	if parsedURL.Scheme == "" {
+		return nil, fmt.Errorf("no URL scheme provided; expected http or https")
+	}
+
 	if s.CaptureOptions.DelayBetweenCapture > 0 {
 		time.Sleep(time.Duration(s.CaptureOptions.DelayBetweenCapture) * time.Second)
 	}
