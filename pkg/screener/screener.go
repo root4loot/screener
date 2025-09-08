@@ -21,6 +21,7 @@ import (
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/golang/freetype/truetype"
+	"github.com/miekg/dns"
 	"github.com/root4loot/goutils/log"
 	"github.com/root4loot/goutils/sliceutil"
 	"github.com/root4loot/goutils/urlutil"
@@ -117,33 +118,30 @@ func (s *Screener) tryResolvers(hostname string) (string, error) {
 		return "system", nil
 	}
 
+	// Try custom resolvers first using direct DNS queries
 	for _, resolver := range s.CaptureOptions.CustomResolvers {
 		contextTag := fmt.Sprintf("[resolver=%s]", resolver)
 		log.Debugf("%s Trying to resolve %s", contextTag, hostname)
 
-		r := &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: time.Second * 5,
-				}
-				return d.DialContext(ctx, network, net.JoinHostPort(resolver, "53"))
-			},
+		// Use miekg/dns to make direct DNS queries
+		resolverAddress := resolver
+		if !strings.Contains(resolver, ":") {
+			resolverAddress = net.JoinHostPort(resolver, "53")
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-
-		ips, err := r.LookupIPAddr(ctx, hostname)
-		if err != nil {
-			log.Debugf("%s Failed to resolve %s: %v", contextTag, hostname, err)
-			continue
-		}
-
-		if len(ips) > 0 {
-			log.Debugf("%s Successfully resolved %s to %s", contextTag, hostname, ips[0].IP.String())
+		// Try A record first
+		if ip, err := s.queryDNSRecord(resolverAddress, hostname, dns.TypeA); err == nil {
+			log.Debugf("%s Successfully resolved %s to %s (A record)", contextTag, hostname, ip)
 			return resolver, nil
 		}
+
+		// Try AAAA record for IPv6
+		if ip, err := s.queryDNSRecord(resolverAddress, hostname, dns.TypeAAAA); err == nil {
+			log.Debugf("%s Successfully resolved %s to %s (AAAA record)", contextTag, hostname, ip)
+			return resolver, nil
+		}
+
+		log.Debugf("%s Failed to resolve %s", contextTag, hostname)
 	}
 
 	// fallback to system dns
@@ -162,6 +160,42 @@ func (s *Screener) tryResolvers(hostname string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no IP addresses found for %s", hostname)
+}
+
+// queryDNSRecord queries a specific DNS record type using the miekg/dns library
+func (s *Screener) queryDNSRecord(resolverAddress, hostname string, recordType uint16) (string, error) {
+	c := &dns.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	m := &dns.Msg{}
+	m.SetQuestion(dns.Fqdn(hostname), recordType)
+	m.RecursionDesired = true
+
+	r, _, err := c.Exchange(m, resolverAddress)
+	if err != nil {
+		return "", fmt.Errorf("DNS query failed: %v", err)
+	}
+
+	if r.Rcode != dns.RcodeSuccess {
+		return "", fmt.Errorf("DNS query returned error code: %v", r.Rcode)
+	}
+
+	// Parse the response based on record type
+	for _, ans := range r.Answer {
+		switch recordType {
+		case dns.TypeA:
+			if a, ok := ans.(*dns.A); ok {
+				return a.A.String(), nil
+			}
+		case dns.TypeAAAA:
+			if aaaa, ok := ans.(*dns.AAAA); ok {
+				return aaaa.AAAA.String(), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no %s records found for %s", dns.TypeToString[recordType], hostname)
 }
 
 // CaptureScreenshot takes a screenshot of the provided URL and returns the result.
