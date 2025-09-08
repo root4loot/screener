@@ -47,6 +47,7 @@ CONFIGURATIONS:
   -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
+  -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
@@ -183,7 +184,7 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 }
 func (cli *cli) parseFlags() {
 	var help, ver, debug bool
-	var ignoreStatusCodes string
+	var ignoreStatusCodes, customResolvers string
 
 	options := NewCLIOptions()
 	captureOptions := screener.NewOptions()
@@ -205,6 +206,8 @@ func (cli *cli) parseFlags() {
 	flag.IntVar(&cli.DuplicateThreshold, "dt", options.DuplicateThreshold, "")
 	flag.StringVar(&ignoreStatusCodes, "ignore-status-codes", "", "")
 	flag.StringVar(&ignoreStatusCodes, "isc", "", "")
+	flag.StringVar(&customResolvers, "resolvers", "", "")
+	flag.StringVar(&customResolvers, "r", "", "")
 
 	flag.IntVar(&cli.CaptureOptions.CaptureHeight, "capture-height", captureOptions.CaptureHeight, "")
 	flag.IntVar(&cli.CaptureOptions.CaptureHeight, "ch", captureOptions.CaptureHeight, "")
@@ -273,6 +276,16 @@ func (cli *cli) parseFlags() {
 				os.Exit(1)
 			}
 			cli.CaptureOptions.IgnoreStatusCodes = append(cli.CaptureOptions.IgnoreStatusCodes, statusCode)
+		}
+	}
+
+	if customResolvers != "" {
+		resolvers := strings.Split(customResolvers, ",")
+		for _, resolver := range resolvers {
+			resolver = strings.TrimSpace(resolver)
+			if resolver != "" {
+				cli.CaptureOptions.CustomResolvers = append(cli.CaptureOptions.CustomResolvers, resolver)
+			}
 		}
 	}
 }

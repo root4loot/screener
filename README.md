@@ -72,6 +72,7 @@ CONFIGURATIONS:
   -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
+  -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
