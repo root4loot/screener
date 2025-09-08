@@ -35,7 +35,6 @@ type Screener struct {
 	mutex          sync.Mutex
 }
 
-// Result contains the result of a screenshot capture.
 type Result struct {
 	TargetURL  string
 	LandingURL string
@@ -47,24 +46,23 @@ type Result struct {
 
 type Image []byte
 
-// captureOptions contains the options for capturing screenshots.
 type captureOptions struct {
-	CaptureHeight            int      // Height of the capture
-	CaptureWidth             int      // Width of the capture
-	Timeout                  int      // Timeout for each capture (seconds)
-	RespectCertificateErrors bool     // Respect certificate errors
-	UseHTTP2                 bool     // Use HTTP2
-	UserAgent                string   // User agent
-	DelayBeforeCapture       int      // Delay before capture (seconds)
-	DelayBetweenCapture      int      // Delay between captures (seconds)
-	IgnoreRedirects          bool     // Do not follow redirects
-	IgnoreStatusCodes        []int    // Status codes to ignore
-	CaptureFull              bool     // Take a full-page screenshot
-	ScreenshotErrors         bool     // Capture screenshots even if there are errors
-	CustomResolvers          []string // Custom DNS resolvers to try
+	CaptureHeight            int
+	CaptureWidth             int
+	Timeout                  int
+	RespectCertificateErrors bool
+	UseHTTP2                 bool
+	UserAgent                string
+	DelayBeforeCapture       int
+	DelayBetweenCapture      int
+	IgnoreRedirects          bool
+	IgnoreStatusCodes        []int
+	CaptureFull              bool
+	ScreenshotErrors         bool
+	CustomResolvers          []string
 }
 
-// NewOptions returns an CaptureOptions struct initialized with default values.
+// NewOptions returns default capture options
 func NewOptions() captureOptions {
 	return captureOptions{
 		CaptureHeight:            768,
@@ -81,7 +79,7 @@ func NewOptions() captureOptions {
 	}
 }
 
-// NewScreener creates a Screener with default options.
+// NewScreener creates a Screener with default options
 func NewScreener() *Screener {
 	return &Screener{
 		CaptureOptions: NewOptions(),
@@ -89,7 +87,7 @@ func NewScreener() *Screener {
 	}
 }
 
-// NewScreenerWithOptions creates a Screener with the provided options.
+// NewScreenerWithOptions creates a Screener with provided options
 func NewScreenerWithOptions(options captureOptions) *Screener {
 	return &Screener{
 		CaptureOptions: options,
@@ -97,7 +95,6 @@ func NewScreenerWithOptions(options captureOptions) *Screener {
 	}
 }
 
-// SetDebug enables or disables debug mode.
 func (s *Screener) SetDebug(debug bool) {
 	s.Debug = debug
 	if debug {
@@ -107,12 +104,12 @@ func (s *Screener) SetDebug(debug bool) {
 	}
 }
 
+// Init initializes the screener logger
 func Init() {
 	log.Init("screener")
 	log.SetLevel(log.InfoLevel)
 }
 
-// tryResolvers attempts to resolve the hostname using custom resolvers, falls back to system DNS
 func (s *Screener) tryResolvers(hostname string) (string, error) {
 	if len(s.CaptureOptions.CustomResolvers) == 0 {
 		return "system", nil
@@ -162,7 +159,6 @@ func (s *Screener) tryResolvers(hostname string) (string, error) {
 	return "", fmt.Errorf("no IP addresses found for %s", hostname)
 }
 
-// queryDNSRecord queries a specific DNS record type using the miekg/dns library
 func (s *Screener) queryDNSRecord(resolverAddress, hostname string, recordType uint16) (string, error) {
 	c := &dns.Client{
 		Timeout: 5 * time.Second,
@@ -274,7 +270,6 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 		if err != nil {
 			log.Fatalf("Error setting viewport: %v", err)
 		}
-		// viewport set
 	}
 
 	var e proto.NetworkResponseReceived
