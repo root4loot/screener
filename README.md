@@ -47,6 +47,9 @@ docker run --rm -it $(docker build -q .) -t example.com
 ## Usage
 
 ```
+USAGE:
+  screener [options] (-t <target> | -l <targets.txt>)
+
 INPUT:
   -t, --target                   target input (domain, IP, URL)
   -l, --list                     input file with list of targets (one per line)
