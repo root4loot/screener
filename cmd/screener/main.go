@@ -30,25 +30,25 @@ INPUT:
   -l, --list                     input file with list of targets (one per line)
 
 CONFIGURATIONS:
-  -c,   --concurrency            number of concurrent operations                         (Default: 10)
   -ad,  --avoid-duplicates       prevent saving duplicate outputs                        (Default: false)
+  -c,   --concurrency            number of concurrent operations                         (Default: 10)
+  -cf,  --capture-full           capture entire content                                  (Default: false)
+  -ch,  --capture-height         output height                                           (Default: 768)
+  -cw,  --capture-width          output width                                            (Default: 1366)
+  -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
+  -dc,  --delay-capture          delay before operation (seconds)                        (Default: 2)
   -dt,  --duplicate-threshold    threshold for similarity percentage (0-100)             (Default: 96)
                                  Applicable only when --avoid-duplicates is enabled. Outputs
                                  with a similarity score greater than or equal to this value
                                  will be considered duplicates and will not be saved.
+  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
+  -nr,  --ignore-redirects       do not follow redirects                                 (Default: false)
+  -p,   --proxy                  HTTP/SOCKS5 proxy server                                (Example: 127.0.0.1:8080)
+  -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
+  -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -to,  --timeout                screenshot timeout                                      (Default: 15 seconds)
   -ua,  --user-agent             specify user agent                                      (Default: Chrome UA)
   -uh,  --use-http2              use HTTP2                                               (Default: false)
-  -nr,  --ignore-redirects       do not follow redirects                                 (Default: false)
-  -cw,  --capture-width          output width                                            (Default: 1366)
-  -ch,  --capture-height         output height                                           (Default: 768)
-  -cf,  --capture-full           capture entire content                                  (Default: false)
-  -dc,  --delay-capture          delay before operation (seconds)                        (Default: 2)
-  -dbc, --delay-between-capture  delay between operations (seconds)                      (Default: 0)
-  -rce, --respect-cert-err       respect certificate errors                              (Default: false)
-  -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
-  -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
-  -p,   --proxy                  HTTP/SOCKS5 proxy server                                (Example: 127.0.0.1:8080)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
