@@ -48,6 +48,7 @@ CONFIGURATIONS:
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
   -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
+  -p,   --proxy                  HTTP/SOCKS5 proxy server                                (Example: 127.0.0.1:8080)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
@@ -229,6 +230,8 @@ func (cli *cli) parseFlags() {
 	flag.IntVar(&cli.CaptureOptions.DelayBetweenCapture, "dbc", captureOptions.DelayBetweenCapture, "")
 	flag.BoolVar(&cli.CaptureOptions.CaptureFull, "capture-full", captureOptions.CaptureFull, "")
 	flag.BoolVar(&cli.CaptureOptions.CaptureFull, "cf", captureOptions.CaptureFull, "")
+	flag.StringVar(&cli.CaptureOptions.Proxy, "proxy", captureOptions.Proxy, "")
+	flag.StringVar(&cli.CaptureOptions.Proxy, "p", captureOptions.Proxy, "")
 
 	// OUTPUT
 	flag.BoolVar(&cli.NoImprint, "no-text", false, "")

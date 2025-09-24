@@ -60,6 +60,7 @@ type captureOptions struct {
 	CaptureFull              bool
 	ScreenshotErrors         bool
 	CustomResolvers          []string
+	Proxy                    string
 }
 
 // NewOptions returns default capture options
@@ -76,6 +77,7 @@ func NewOptions() captureOptions {
 		CaptureFull:              false,
 		UserAgent:                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
 		IgnoreStatusCodes:        []int{204, 301, 302, 304, 401, 407},
+		Proxy:                    "",
 	}
 }
 
@@ -250,6 +252,10 @@ func (s *Screener) CaptureScreenshot(parsedURL *url.URL) (*Result, error) {
 
 	if !s.CaptureOptions.UseHTTP2 {
 		l.Set("disable-http2", "true")
+	}
+
+	if s.CaptureOptions.Proxy != "" {
+		l.Set("proxy-server", s.CaptureOptions.Proxy)
 	}
 
 	browserURL := l.MustLaunch()

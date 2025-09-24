@@ -47,9 +47,6 @@ docker run --rm -it $(docker build -q .) -t example.com
 ## Usage
 
 ```
-USAGE:
-  screener [options] (-t <target> | -l <targets.txt>)
-
 INPUT:
   -t, --target                   target input (domain, IP, URL)
   -l, --list                     input file with list of targets (one per line)
@@ -73,6 +70,7 @@ CONFIGURATIONS:
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -isc, --ignore-status-codes    ignore specific status codes (comma separated)          (Default: 204, 301, 302, 304, 401, 407)
   -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
+  -p,   --proxy                  HTTP/SOCKS5 proxy server                                (Example: 127.0.0.1:8080)
 
 OUTPUT:
   -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
