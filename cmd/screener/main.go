@@ -45,6 +45,7 @@ CONFIGURATIONS:
   -nr,  --ignore-redirects       do not follow redirects                                 (Default: false)
   -p,   --proxy                  HTTP/SOCKS5 proxy server                                (Example: 127.0.0.1:8080)
   -r,   --resolvers              custom DNS resolvers (comma separated)                  (Default: system resolvers)
+  -rf,  --resolver-file          file containing DNS resolvers (one per line)
   -rce, --respect-cert-err       respect certificate errors                              (Default: false)
   -to,  --timeout                screenshot timeout                                      (Default: 15 seconds)
   -ua,  --user-agent             specify user agent                                      (Default: Chrome UA)
@@ -185,7 +186,7 @@ func processTarget(worker func(string) error, concurrency int, targetChannel <-c
 }
 func (cli *cli) parseFlags() {
 	var help, ver, debug bool
-	var ignoreStatusCodes, customResolvers string
+	var ignoreStatusCodes, customResolvers, resolverFile string
 
 	options := NewCLIOptions()
 	captureOptions := screener.NewOptions()
@@ -209,6 +210,8 @@ func (cli *cli) parseFlags() {
 	flag.StringVar(&ignoreStatusCodes, "isc", "", "")
 	flag.StringVar(&customResolvers, "resolvers", "", "")
 	flag.StringVar(&customResolvers, "r", "", "")
+	flag.StringVar(&resolverFile, "resolver-file", "", "")
+	flag.StringVar(&resolverFile, "rf", "", "")
 
 	flag.IntVar(&cli.CaptureOptions.CaptureHeight, "capture-height", captureOptions.CaptureHeight, "")
 	flag.IntVar(&cli.CaptureOptions.CaptureHeight, "ch", captureOptions.CaptureHeight, "")
@@ -279,6 +282,20 @@ func (cli *cli) parseFlags() {
 				os.Exit(1)
 			}
 			cli.CaptureOptions.IgnoreStatusCodes = append(cli.CaptureOptions.IgnoreStatusCodes, statusCode)
+		}
+	}
+
+	if resolverFile != "" {
+		resolversFromFile, err := fileutil.ReadFile(resolverFile)
+		if err != nil {
+			log.Errorf("Error reading resolver file: %v", err)
+			os.Exit(1)
+		}
+		for _, resolver := range resolversFromFile {
+			resolver = strings.TrimSpace(resolver)
+			if resolver != "" && !strings.HasPrefix(resolver, "#") {
+				cli.CaptureOptions.CustomResolvers = append(cli.CaptureOptions.CustomResolvers, resolver)
+			}
 		}
 	}
 
