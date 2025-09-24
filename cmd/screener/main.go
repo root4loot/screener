@@ -52,7 +52,7 @@ CONFIGURATIONS:
   -uh,  --use-http2              use HTTP2                                               (Default: false)
 
 OUTPUT:
-  -o,   --outfolder              save outputs to specified folder                        (Default: ./screenshots)
+  -o,   --outfolder              save outputs to specified folder                        (Default: screenshots/)
   -nt,  --no-text                do not add text to output images                        (Default: false)
         --debug                  enable debug mode
         --version                display version
